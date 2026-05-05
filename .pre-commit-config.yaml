@@ -30,3 +30,12 @@ repos:
         language: system
         stages: [commit-msg]
 
+  - repo: local
+    hooks:
+      - id: sync-template-version
+        name: Sync copier.yml dough pin to __about__.py
+        entry: python dev/sync_template_version.py
+        language: system
+        files: ^src/dough/__about__\.py$
+        pass_filenames: false
+

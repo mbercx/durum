@@ -1,0 +1,24 @@
+_subdirectory: copier-template
+_templates_suffix: .jinja
+_message_after_copy: |
+
+  ✨ Dough scaffolding added. Run `hatch test` to verify.
+
+package_name:
+  type: str
+  help: Python package name (derived from the target directory).
+  default: "{{ _folder_name | lower | replace('-', '_') }}"
+  when: false
+
+_tasks:
+  - >-
+    copier copy --trust --defaults --vcs-ref=HEAD
+    --exclude 'tests/**'
+    --data 'docs=mkdocs'
+    --data 'doc_deploy=github'
+    --data 'type_check=strict'
+    --data 'coverage=codecov'
+    https://github.com/mbercx/python-copier .
+  - "uv add --quiet 'dough[pint]>=0.4,<0.5'"
+  - "uv add --quiet --optional tests pytest-regressions"
+  - python -c "from pathlib import Path; p = Path('pyproject.toml'); t = p.read_text(); b = '\n[[tool.mypy.overrides]]\nmodule = [\"glom\"]\nignore_missing_imports = true\n'; p.write_text(t + b) if '\"glom\"' not in t else None"

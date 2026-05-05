@@ -25,6 +25,25 @@ See the [outputs design page](https://mbercx.github.io/dough/design/outputs/) fo
 It's an opt-in plugin — activate it in your top-level `conftest.py` with `pytest_plugins = ["dough.testing.plugin"]`.
 See the [testing design page](https://mbercx.github.io/dough/design/testing/).
 
+## 🚀 Bootstrapping a wrapper
+
+First create a git-tracked package directory:
+
+```bash
+mkdir my-package
+cd my-package
+git init
+```
+
+Or clone a fresh repo from e.g. GitHub.
+Then copy the template:
+
+```bash
+copier copy --trust https://github.com/mbercx/dough .
+```
+
+This renders the typed-output scaffolding, then chains an opinionated non-interactive [`python-copier`](https://github.com/mbercx/python-copier) run for the Python project skeleton.
+
 ## 📦 Packages built on `dough`
 
 | Package | Code | Status |
