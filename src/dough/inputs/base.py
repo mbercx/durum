@@ -3,7 +3,7 @@
 import abc
 import typing
 
-from glom import glom
+from glom import Assign, glom
 
 T = typing.TypeVar("T")
 
@@ -39,11 +39,14 @@ class InputMapping:
         _owner: "BaseInput[typing.Any] | None" = None,
         _path: tuple[str, ...] = (),
     ) -> None:
-        self._owner = typing.cast("BaseInput[typing.Any]", _owner)
-        self._path = _path
+        # Bypass our custom __setattr__ which only allows declared field writes.
+        object.__setattr__(self, "_owner", _owner)
+        object.__setattr__(self, "_path", _path)
 
         for name, sub_cls in self._sub_fields.items():
-            setattr(self, name, sub_cls(_owner=_owner, _path=_path + (name,)))
+            object.__setattr__(
+                self, name, sub_cls(_owner=_owner, _path=_path + (name,))
+            )
 
     def __getattr__(self, name: str) -> typing.Any:
         if name in self._fields:
@@ -55,6 +58,18 @@ class InputMapping:
                 ) from None
 
         raise AttributeError(name)
+
+    def __setattr__(self, name: str, value: typing.Any) -> None:
+        if name in self._sub_fields:
+            raise AttributeError(
+                f"{type(self).__name__}.{name} is a sub-mapping; assign its leaf fields instead"
+            )
+        if name not in self._fields:
+            raise AttributeError(f"{type(self).__name__} has no field {name!r}")
+        glom(
+            self._owner.raw_inputs,
+            Assign(".".join(self._path + (name,)), value, missing=dict),
+        )
 
     def __dir__(self) -> list[str]:
         return sorted(set(object.__dir__(self)) | self._fields)
