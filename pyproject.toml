@@ -37,6 +37,7 @@ tests = [
   "pytest-cov",
   "pytest-regressions",
   "numpy",
+  "pydantic",
   "dough[pint]",
 ]
 pre-commit = [
