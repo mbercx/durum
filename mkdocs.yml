@@ -7,6 +7,8 @@ nav:
   - Home: index.md
   - Design:
       - Outputs: design/outputs.md
+      - Inputs: design/inputs.md
+      - Inputs-Ar: design/inputs_architecture.md
       - Units: design/units.md
       - Testing: design/testing.md
   - Developer guide: developer.md
