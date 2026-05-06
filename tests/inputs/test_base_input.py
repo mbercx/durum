@@ -90,3 +90,47 @@ def test_three_level_recursion():
     inp.raw_inputs = {"mid": {"deep": {"value": 42}}}
     assert inp.inputs.mid.deep.value == 42
     assert "value" in dir(inp.inputs.mid.deep)
+
+
+def test_top_level_leaf_write():
+    inp = _MockInput()
+    inp.inputs.name = "alice"
+    inp.inputs.count = 3
+    assert inp.raw_inputs == {"name": "alice", "count": 3}
+
+
+def test_nested_leaf_write_creates_parent_dict():
+    inp = _MockInput()
+    inp.inputs.mid.flag = True
+    assert inp.raw_inputs == {"mid": {"flag": True}}
+
+
+def test_three_level_leaf_write():
+    inp = _MockInput()
+    inp.inputs.mid.deep.value = 42
+    assert inp.raw_inputs == {"mid": {"deep": {"value": 42}}}
+
+
+def test_write_then_read_round_trip():
+    inp = _MockInput()
+    inp.inputs.mid.deep.value = 7
+    assert inp.inputs.mid.deep.value == 7
+
+
+def test_overwrite_existing_value():
+    inp = _MockInput()
+    inp.inputs.name = "alice"
+    inp.inputs.name = "bob"
+    assert inp.raw_inputs == {"name": "bob"}
+
+
+def test_write_undeclared_raises():
+    inp = _MockInput()
+    with pytest.raises(AttributeError, match="has no field 'bogus'"):
+        inp.inputs.bogus = 1
+
+
+def test_write_to_sub_mapping_raises():
+    inp = _MockInput()
+    with pytest.raises(AttributeError, match="is a sub-mapping"):
+        inp.inputs.mid = {"flag": True}
