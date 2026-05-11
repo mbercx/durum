@@ -1,4 +1,5 @@
 import pytest
+from pydantic import BaseModel
 
 from dough.inputs import BaseInput, InputMapping
 
@@ -24,8 +25,8 @@ class _Top(InputMapping):
     """Top-level leaf."""
 
 
-class _MockInput(BaseInput[_Top]):
-    pass
+class _MockInput(BaseInput):
+    inputs: _Top
 
 
 def test_inputs_is_mapping_instance():
@@ -33,24 +34,16 @@ def test_inputs_is_mapping_instance():
     assert isinstance(inp.inputs, _Top)
 
 
-def test_subclass_without_generic_raises():
-    class _Bare(BaseInput):
-        pass
-
-    with pytest.raises(TypeError, match="must subclass BaseInput"):
-        _Bare()
-
-
 def test_top_level_leaf_read():
     inp = _MockInput()
-    inp.raw_inputs = {"name": "alice", "count": 3}
+    inp.base = {"name": "alice", "count": 3}
     assert inp.inputs.name == "alice"
     assert inp.inputs.count == 3
 
 
 def test_unset_field_raises_attribute_error():
     inp = _MockInput()
-    with pytest.raises(AttributeError, match="name not set in raw_inputs"):
+    with pytest.raises(AttributeError, match="name not set"):
         inp.inputs.name
 
 
@@ -70,7 +63,7 @@ def test_dir_exposes_fields_for_tab_completion():
 
 def test_sub_mapping_read():
     inp = _MockInput()
-    inp.raw_inputs = {"mid": {"flag": True}}
+    inp.base = {"mid": {"flag": True}}
     assert inp.inputs.mid.flag is True
 
 
@@ -81,13 +74,13 @@ def test_sub_mapping_dir():
 
 def test_sub_mapping_unset_raises():
     inp = _MockInput()
-    with pytest.raises(AttributeError, match="flag not set in raw_inputs"):
+    with pytest.raises(AttributeError, match="flag not set"):
         inp.inputs.mid.flag
 
 
 def test_three_level_recursion():
     inp = _MockInput()
-    inp.raw_inputs = {"mid": {"deep": {"value": 42}}}
+    inp.base = {"mid": {"deep": {"value": 42}}}
     assert inp.inputs.mid.deep.value == 42
     assert "value" in dir(inp.inputs.mid.deep)
 
@@ -96,19 +89,19 @@ def test_top_level_leaf_write():
     inp = _MockInput()
     inp.inputs.name = "alice"
     inp.inputs.count = 3
-    assert inp.raw_inputs == {"name": "alice", "count": 3}
+    assert inp.base == {"name": "alice", "count": 3}
 
 
 def test_nested_leaf_write_creates_parent_dict():
     inp = _MockInput()
     inp.inputs.mid.flag = True
-    assert inp.raw_inputs == {"mid": {"flag": True}}
+    assert inp.base == {"mid": {"flag": True}}
 
 
 def test_three_level_leaf_write():
     inp = _MockInput()
     inp.inputs.mid.deep.value = 42
-    assert inp.raw_inputs == {"mid": {"deep": {"value": 42}}}
+    assert inp.base == {"mid": {"deep": {"value": 42}}}
 
 
 def test_write_then_read_round_trip():
@@ -121,7 +114,7 @@ def test_overwrite_existing_value():
     inp = _MockInput()
     inp.inputs.name = "alice"
     inp.inputs.name = "bob"
-    assert inp.raw_inputs == {"name": "bob"}
+    assert inp.base == {"name": "bob"}
 
 
 def test_write_undeclared_raises():
@@ -134,3 +127,59 @@ def test_write_to_sub_mapping_raises():
     inp = _MockInput()
     with pytest.raises(AttributeError, match="is a sub-mapping"):
         inp.inputs.mid = {"flag": True}
+
+
+# --- `base` constructor behaviour -------------------------------------------
+
+
+def test_base_kwarg_seeds_state():
+    """Passing `base=` to the constructor uses that object as state."""
+    seed = {"name": "alice", "count": 3}
+    inp = _MockInput(base=seed)
+    assert inp.base is seed
+    assert inp.inputs.name == "alice"
+
+
+def test_base_kwarg_does_not_validate_type():
+    """`base=` is pass-through; dough does not check it matches the annotation.
+
+    Pathological: declare `base: dict` but pass a list. Construction
+    succeeds; reads/writes break later when glom navigates the wrong shape.
+    """
+    inp = _MockInput(base=[1, 2, 3])
+    assert inp.base == [1, 2, 3]
+    with pytest.raises(Exception):
+        inp.inputs.name
+
+
+# --- pydantic backend -------------------------------------------------------
+
+
+class _TopModel(BaseModel):
+    name: str = ""
+    count: int = 0
+
+
+class _PydanticInput(BaseInput):
+    base: _TopModel
+    inputs: _Top
+
+
+def test_pydantic_base_read_write_round_trip():
+    """Mapping routes reads and writes through a pydantic BaseModel `base`."""
+    inp = _PydanticInput()
+    inp.inputs.name = "alice"
+    assert inp.base.name == "alice"
+    assert inp.inputs.name == "alice"
+
+
+def test_explicit_dict_base_annotation_works():
+    """Author can declare `base: dict` explicitly; behaviour matches default."""
+
+    class _ExplicitDict(BaseInput):
+        base: dict
+        inputs: _Top
+
+    inp = _ExplicitDict()
+    inp.inputs.name = "alice"
+    assert inp.base == {"name": "alice"}
