@@ -1,24 +1,24 @@
 import pytest
 from pydantic import BaseModel
 
-from dough.inputs import BaseInput, InputMapping
+from dough.inputs import BaseInput, InputView
 
 
-class _Deep(InputMapping):
+class _Deep(InputView):
     value: int
     """Deepest leaf."""
 
 
-class _Mid(InputMapping):
+class _Mid(InputView):
     deep: _Deep
-    """Mid-level sub-mapping."""
+    """Mid-level sub-view."""
     flag: bool
     """Mid-level leaf."""
 
 
-class _Top(InputMapping):
+class _Top(InputView):
     mid: _Mid
-    """Nested sub-mapping."""
+    """Nested sub-view."""
     name: str
     """Top-level leaf."""
     count: int
@@ -29,7 +29,7 @@ class _MockInput(BaseInput):
     inputs: _Top
 
 
-def test_inputs_is_mapping_instance():
+def test_inputs_is_view_instance():
     inp = _MockInput()
     assert isinstance(inp.inputs, _Top)
 
@@ -125,7 +125,7 @@ def test_write_undeclared_raises():
 
 def test_write_to_sub_mapping_raises():
     inp = _MockInput()
-    with pytest.raises(AttributeError, match="is a sub-mapping"):
+    with pytest.raises(AttributeError, match="is a sub-view"):
         inp.inputs.mid = {"flag": True}
 
 

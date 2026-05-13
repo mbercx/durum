@@ -2,7 +2,7 @@
 
 import typing
 
-class InputMapping:
+class InputView:
     """Typed namespace over an owner's `base` state."""
 
 class BaseInput:

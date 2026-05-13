@@ -1,3 +1,3 @@
-from dough.inputs.base import BaseInput, InputMapping
+from dough.inputs.base import BaseInput, InputView
 
-__all__ = ["BaseInput", "InputMapping"]
+__all__ = ["BaseInput", "InputView"]
