@@ -1,4 +1,4 @@
-"""Bare-minimum BaseInput + InputMapping."""
+"""Bare-minimum BaseInput + InputView."""
 
 import abc
 import typing
@@ -6,17 +6,17 @@ import typing
 from glom import Assign, glom
 
 
-class InputMapping:
+class InputView:
     """Typed namespace over an owner's `base` state.
 
     Subclasses declare annotated fields. Reads/writes route through
-    `glom` to `self._owner.base`, at this mapping's `_path`. Sub-mapping
-    fields (annotation pointing to another `InputMapping` subclass) are
+    `glom` to `self._owner.base`, at this view's `_path`. Sub-view
+    fields (annotation pointing to another `InputView` subclass) are
     instantiated with the appropriate path prefix.
     """
 
     _fields: typing.ClassVar[frozenset[str]] = frozenset()
-    _sub_fields: typing.ClassVar[dict[str, type["InputMapping"]]] = {}
+    _sub_fields: typing.ClassVar[dict[str, type["InputView"]]] = {}
 
     def __init_subclass__(cls) -> None:
         hints = typing.get_type_hints(cls)
@@ -24,7 +24,7 @@ class InputMapping:
         cls._sub_fields = {
             name: hint
             for name, hint in hints.items()
-            if isinstance(hint, type) and issubclass(hint, InputMapping)
+            if isinstance(hint, type) and issubclass(hint, InputView)
         }
 
     def __init__(self, owner: "BaseInput", path: tuple[str, ...] = ()) -> None:
@@ -46,7 +46,7 @@ class InputMapping:
     def __setattr__(self, name: str, value: typing.Any) -> None:
         if name in self._sub_fields:
             raise AttributeError(
-                f"{type(self).__name__}.{name} is a sub-mapping; assign its leaf fields instead"
+                f"{type(self).__name__}.{name} is a sub-view; assign its leaf fields instead"
             )
         if name not in self._fields:
             raise AttributeError(f"{type(self).__name__} has no field {name!r}")
@@ -64,8 +64,8 @@ class BaseInput(abc.ABC):
 
     Subclasses may declare `base` (a `dict` or `BaseModel` subclass) as
     the state; if omitted, it defaults to `dict`. They also declare one
-    or more `InputMapping` subclasses as typed namespaces; mapping
-    attribute names are the package author's choice.
+    or more `InputView` subclasses as typed namespaces; view attribute
+    names are the package author's choice.
     """
 
     def __init__(self, base: typing.Any = None) -> None:
@@ -74,5 +74,5 @@ class BaseInput(abc.ABC):
         self.base = base_cls() if base is None else base
 
         for name, hint in hints.items():
-            if isinstance(hint, type) and issubclass(hint, InputMapping):
+            if isinstance(hint, type) and issubclass(hint, InputView):
                 setattr(self, name, hint(self))
