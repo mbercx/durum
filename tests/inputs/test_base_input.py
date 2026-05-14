@@ -4,20 +4,20 @@ from pydantic import BaseModel
 from dough.inputs import BaseInput, InputView
 
 
-class _Deep(InputView):
+class Deep(InputView):
     value: int
     """Deepest leaf."""
 
 
-class _Mid(InputView):
-    deep: _Deep
+class Mid(InputView):
+    deep: Deep
     """Mid-level sub-view."""
     flag: bool
     """Mid-level leaf."""
 
 
-class _Top(InputView):
-    mid: _Mid
+class Top(InputView):
+    mid: Mid
     """Nested sub-view."""
     name: str
     """Top-level leaf."""
@@ -25,36 +25,36 @@ class _Top(InputView):
     """Top-level leaf."""
 
 
-class _MockInput(BaseInput):
-    inputs: _Top
+class MockInput(BaseInput):
+    inputs: Top
 
 
 def test_inputs_is_view_instance():
-    inp = _MockInput()
-    assert isinstance(inp.inputs, _Top)
+    inp = MockInput()
+    assert isinstance(inp.inputs, Top)
 
 
 def test_top_level_leaf_read():
-    inp = _MockInput()
+    inp = MockInput()
     inp.base = {"name": "alice", "count": 3}
     assert inp.inputs.name == "alice"
     assert inp.inputs.count == 3
 
 
 def test_unset_field_raises_attribute_error():
-    inp = _MockInput()
+    inp = MockInput()
     with pytest.raises(AttributeError, match="name not set"):
         inp.inputs.name
 
 
 def test_undeclared_name_raises_attribute_error():
-    inp = _MockInput()
+    inp = MockInput()
     with pytest.raises(AttributeError):
         inp.inputs.bogus
 
 
 def test_dir_exposes_fields_for_tab_completion():
-    inp = _MockInput()
+    inp = MockInput()
     d = dir(inp.inputs)
     assert "name" in d
     assert "count" in d
@@ -62,69 +62,69 @@ def test_dir_exposes_fields_for_tab_completion():
 
 
 def test_sub_mapping_read():
-    inp = _MockInput()
+    inp = MockInput()
     inp.base = {"mid": {"flag": True}}
     assert inp.inputs.mid.flag is True
 
 
 def test_sub_mapping_dir():
-    inp = _MockInput()
+    inp = MockInput()
     assert "flag" in dir(inp.inputs.mid)
 
 
 def test_sub_mapping_unset_raises():
-    inp = _MockInput()
+    inp = MockInput()
     with pytest.raises(AttributeError, match="flag not set"):
         inp.inputs.mid.flag
 
 
 def test_three_level_recursion():
-    inp = _MockInput()
+    inp = MockInput()
     inp.base = {"mid": {"deep": {"value": 42}}}
     assert inp.inputs.mid.deep.value == 42
     assert "value" in dir(inp.inputs.mid.deep)
 
 
 def test_top_level_leaf_write():
-    inp = _MockInput()
+    inp = MockInput()
     inp.inputs.name = "alice"
     inp.inputs.count = 3
     assert inp.base == {"name": "alice", "count": 3}
 
 
 def test_nested_leaf_write_creates_parent_dict():
-    inp = _MockInput()
+    inp = MockInput()
     inp.inputs.mid.flag = True
     assert inp.base == {"mid": {"flag": True}}
 
 
 def test_three_level_leaf_write():
-    inp = _MockInput()
+    inp = MockInput()
     inp.inputs.mid.deep.value = 42
     assert inp.base == {"mid": {"deep": {"value": 42}}}
 
 
 def test_write_then_read_round_trip():
-    inp = _MockInput()
+    inp = MockInput()
     inp.inputs.mid.deep.value = 7
     assert inp.inputs.mid.deep.value == 7
 
 
 def test_overwrite_existing_value():
-    inp = _MockInput()
+    inp = MockInput()
     inp.inputs.name = "alice"
     inp.inputs.name = "bob"
     assert inp.base == {"name": "bob"}
 
 
 def test_write_undeclared_raises():
-    inp = _MockInput()
+    inp = MockInput()
     with pytest.raises(AttributeError, match="has no field 'bogus'"):
         inp.inputs.bogus = 1
 
 
 def test_write_to_sub_mapping_raises():
-    inp = _MockInput()
+    inp = MockInput()
     with pytest.raises(AttributeError, match="is a sub-view"):
         inp.inputs.mid = {"flag": True}
 
@@ -135,7 +135,7 @@ def test_write_to_sub_mapping_raises():
 def test_base_kwarg_seeds_state():
     """Passing `base=` to the constructor uses that object as state."""
     seed = {"name": "alice", "count": 3}
-    inp = _MockInput(base=seed)
+    inp = MockInput(base=seed)
     assert inp.base is seed
     assert inp.inputs.name == "alice"
 
@@ -146,7 +146,7 @@ def test_base_kwarg_does_not_validate_type():
     Pathological: declare `base: dict` but pass a list. Construction
     succeeds; reads/writes break later when glom navigates the wrong shape.
     """
-    inp = _MockInput(base=[1, 2, 3])
+    inp = MockInput(base=[1, 2, 3])
     assert inp.base == [1, 2, 3]
     with pytest.raises(Exception):
         inp.inputs.name
@@ -155,19 +155,19 @@ def test_base_kwarg_does_not_validate_type():
 # --- pydantic backend -------------------------------------------------------
 
 
-class _TopModel(BaseModel):
+class TopModel(BaseModel):
     name: str = ""
     count: int = 0
 
 
-class _PydanticInput(BaseInput):
-    base: _TopModel
-    inputs: _Top
+class PydanticInput(BaseInput):
+    base: TopModel
+    inputs: Top
 
 
 def test_pydantic_base_read_write_round_trip():
     """Mapping routes reads and writes through a pydantic BaseModel `base`."""
-    inp = _PydanticInput()
+    inp = PydanticInput()
     inp.inputs.name = "alice"
     assert inp.base.name == "alice"
     assert inp.inputs.name == "alice"
@@ -176,10 +176,10 @@ def test_pydantic_base_read_write_round_trip():
 def test_explicit_dict_base_annotation_works():
     """Author can declare `base: dict` explicitly; behaviour matches default."""
 
-    class _ExplicitDict(BaseInput):
+    class ExplicitDict(BaseInput):
         base: dict
-        inputs: _Top
+        inputs: Top
 
-    inp = _ExplicitDict()
+    inp = ExplicitDict()
     inp.inputs.name = "alice"
     assert inp.base == {"name": "alice"}
