@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.5.0
+
+### ✨ New features
+
+* `BaseBinaryFileParser`: ABC for binary output files [[b793584](https://github.com/mbercx/dough/commit/b79358451467ac5a60b2cca4fa9d222da6f4ce09)]
+* `Adapter`: Per-field two-way transform between user values and `base` [[34b8b92](https://github.com/mbercx/dough/commit/34b8b928b0b67a2bc0aa8dc6565c9bf7d961bf86)]
+* Inputs: add `InputMapping` write leg [[cc6273d](https://github.com/mbercx/dough/commit/cc6273d198356196c08fecca85346213253e6328)]
+* Inputs: add `BaseInput` + `InputMapping` read leg [[8e475f2](https://github.com/mbercx/dough/commit/8e475f28fe6cb9dc80aeb18340ed7f2afeff8d84)]
+* Add Copier template for `dough`-based wrappers [[544b004](https://github.com/mbercx/dough/commit/544b004e1348f10337a39a8ecabcd3eae525dbfd)]
+
+### 👌 Improvements
+
+* `BaseInput`: Replace generic with annotation-driven shape [[ff0d48b](https://github.com/mbercx/dough/commit/ff0d48b66e7e8c867898e2ce017a0e034acc86e6)]
+
+### 📚 Documentation
+
+* Inputs: Add original design notes [[177c9a3](https://github.com/mbercx/dough/commit/177c9a33d6564cff19503bd6edcfbac01224d077)]
+
+#### Developer
+
+🔄 Refactor
+
+* `BaseInput`: Rename `InputMapping` → `InputView` [[18e8cf2](https://github.com/mbercx/dough/commit/18e8cf25ec64f1abaf288bdbc70606ada8d0dc9c)]
+
+🧪 Tests
+
+* Tests: remove unnecessary leading `_` [[0175135](https://github.com/mbercx/dough/commit/017513516a43e7ac0bcc910bf22cf9139332ace1)]
+
 ## v0.4.0
 
 ### ✨ New features
