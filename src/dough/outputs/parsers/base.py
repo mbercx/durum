@@ -1,4 +1,4 @@
-"""Generic file-parsing base class."""
+"""Generic file-parsing base classes."""
 
 from __future__ import annotations
 
@@ -34,3 +34,23 @@ class BaseOutputFileParser(abc.ABC):
             raise TypeError(f"Unsupported type: {type(file)}")
 
         return cls.parse(content)
+
+
+class BaseBinaryFileParser(abc.ABC):
+    """Abstract class for parsing a single binary output file.
+
+    Counterpart to `BaseOutputFileParser` for files that are not UTF-8-decodable
+    strings — netCDF, HDF5, Fortran-unformatted, etc. Subclasses do their own
+    opening with the appropriate library (`netCDF4.Dataset`, `h5py.File`,
+    `scipy.io.FortranFile`); `dough` adds no I/O of its own.
+    """
+
+    @staticmethod
+    @abc.abstractmethod
+    def parse(path: Path) -> dict[str, Any]:
+        """Parse the file at `path` and return a dictionary of parsed data."""
+
+    @classmethod
+    def parse_from_file(cls, file: str | Path) -> dict[str, Any]:
+        """Helper that normalises `str` to `Path` and dispatches to `parse`."""
+        return cls.parse(Path(file))
