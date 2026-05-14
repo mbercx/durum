@@ -1,3 +1,3 @@
-from dough.inputs.base import BaseInput, InputView
+from dough.inputs.base import Adapter, BaseInput, InputView
 
-__all__ = ["BaseInput", "InputView"]
+__all__ = ["Adapter", "BaseInput", "InputView"]
