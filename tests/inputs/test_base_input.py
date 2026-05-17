@@ -156,8 +156,8 @@ def test_base_kwarg_does_not_validate_type():
 
 
 class TopModel(BaseModel):
-    name: str = ""
-    count: int = 0
+    name: str
+    count: int
 
 
 class PydanticInput(BaseInput):
@@ -183,3 +183,18 @@ def test_explicit_dict_base_annotation_works():
     inp = ExplicitDict()
     inp.inputs.name = "alice"
     assert inp.base == {"name": "alice"}
+
+
+@pytest.mark.parametrize(
+    "input_cls, expected_type",
+    [
+        (MockInput, dict),
+        (PydanticInput, TopModel),
+    ],
+    ids=["dict", "pydantic"],
+)
+def test_empty_construction_skips_validation(input_cls, expected_type):
+    """`BaseInput()` constructs an empty `base` for both backends, even when
+    the pydantic schema has required fields that plain `()` would reject."""
+    inp = input_cls()
+    assert isinstance(inp.base, expected_type)

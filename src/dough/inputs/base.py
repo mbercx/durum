@@ -114,7 +114,14 @@ class BaseInput(abc.ABC):
     def __init__(self, base: typing.Any = None) -> None:
         hints = typing.get_type_hints(type(self))
         base_cls = hints.get("base", dict)
-        self.base = base_cls() if base is None else base
+
+        if base is not None:
+            self.base = base
+        elif base_cls is dict:
+            self.base = {}
+        else:
+            # Otherwise: assume pydantic BaseModel
+            self.base = base_cls.model_construct()
 
         for name, hint in hints.items():
             if isinstance(hint, type) and issubclass(hint, InputView):
