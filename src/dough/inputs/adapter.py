@@ -36,9 +36,9 @@ class PathAdapter(Adapter):
 
     Reads via `glom`. Writes walk the path with `setattr` at every level
     so each parent's `__pydantic_fields_set__` records the child as set
-    (relevant for `model_dump(exclude_unset=True)`). Missing pydantic
-    intermediates are constructed at the field's declared type via
-    `model_construct()`.
+    (relevant for `model_dump(exclude_unset=True)`). Assumes intermediate
+    pydantic submodels already exist on `base` (built eagerly by
+    `BaseInput.__init__`).
     """
 
     def __init__(self, path: str):
@@ -60,13 +60,8 @@ class PathAdapter(Adapter):
         *intermediate_names, leaf_name = self.path.split(".")
 
         parent = base
-
         for name in intermediate_names:
-            try:
-                child = parent.name
-            except AttributeError:
-                child = type(parent).model_fields[name].annotation.model_construct()
-
+            child = getattr(parent, name)
             setattr(parent, name, child)
             parent = child
 
