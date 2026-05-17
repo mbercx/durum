@@ -7,7 +7,7 @@ pydantic submodels by type and constructing missing intermediates.
 
 import typing
 
-from glom import Assign, glom
+from glom import Assign, PathAccessError, glom
 
 __all__ = ["Adapter", "PathAdapter"]
 
@@ -45,9 +45,12 @@ class PathAdapter(Adapter):
         self.path = path
 
     def from_base(self, base: typing.Any) -> typing.Any:
-        if isinstance(base, dict):
-            return glom(base, self.path)
-        return glom(base.model_dump(exclude_unset=True), self.path)
+        source = base if isinstance(base, dict) else base.model_dump(exclude_unset=True)
+        try:
+            return glom(source, self.path)
+        except PathAccessError:
+            leaf = self.path.rsplit(".", 1)[-1]
+            raise AttributeError(f"{leaf} not set") from None
 
     def to_base(self, base: typing.Any, value: typing.Any) -> None:
         if isinstance(base, dict):
