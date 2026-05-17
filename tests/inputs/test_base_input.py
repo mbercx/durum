@@ -1,5 +1,4 @@
 import pytest
-from pydantic import BaseModel
 
 from dough.inputs import BaseInput, InputView
 
@@ -152,49 +151,7 @@ def test_base_kwarg_does_not_validate_type():
         inp.inputs.name
 
 
-# --- pydantic backend -------------------------------------------------------
-
-
-class TopModel(BaseModel):
-    name: str
-    count: int
-
-
-class PydanticInput(BaseInput):
-    base: TopModel
-    inputs: Top
-
-
-def test_pydantic_base_read_write_round_trip():
-    """Mapping routes reads and writes through a pydantic BaseModel `base`."""
-    inp = PydanticInput()
-    inp.inputs.name = "alice"
-    assert inp.base.name == "alice"
-    assert inp.inputs.name == "alice"
-
-
-def test_explicit_dict_base_annotation_works():
-    """Author can declare `base: dict` explicitly; behaviour matches default."""
-
-    class ExplicitDict(BaseInput):
-        base: dict
-        inputs: Top
-
-    inp = ExplicitDict()
-    inp.inputs.name = "alice"
-    assert inp.base == {"name": "alice"}
-
-
-@pytest.mark.parametrize(
-    "input_cls, expected_type",
-    [
-        (MockInput, dict),
-        (PydanticInput, TopModel),
-    ],
-    ids=["dict", "pydantic"],
-)
-def test_empty_construction_skips_validation(input_cls, expected_type):
-    """`BaseInput()` constructs an empty `base` for both backends, even when
-    the pydantic schema has required fields that plain `()` would reject."""
-    inp = input_cls()
-    assert isinstance(inp.base, expected_type)
+def test_empty_construction():
+    """`BaseInput()` starts with an empty dict `base`."""
+    inp = MockInput()
+    assert inp.base == {}

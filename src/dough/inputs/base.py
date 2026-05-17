@@ -71,45 +71,14 @@ class InputView:
 class BaseInput(abc.ABC):
     """Bare-minimum input base.
 
-    Subclasses may declare `base` (a `dict` or `BaseModel` subclass) as
-    the state; if omitted, it defaults to `dict`. They also declare one
-    or more `InputView` subclasses as typed namespaces; view attribute
-    names are the package author's choice.
+    `base` is always a `dict`. Subclasses declare one or more `InputView`
+    subclasses as typed namespaces; view attribute names are the package
+    author's choice.
     """
 
-    def __init__(self, base: typing.Any = None) -> None:
-        hints = typing.get_type_hints(type(self))
-        base_cls = hints.get("base", dict)
+    def __init__(self, base: dict[str, typing.Any] | None = None) -> None:
+        self.base = {} if base is None else base
 
-        if base is not None:
-            self.base = base
-        elif base_cls is dict:
-            self.base = {}
-        else:
-            # Otherwise: assume pydantic BaseModel. Every node is
-            # constructed with `_fields_set=set()`; user writes mark
-            # fields set as normal (and `PathAdapter.to_base` propagates
-            # `fields_set` up the path on leaf writes), so
-            # `model_dump(exclude_unset=True)` still prunes correctly.
-            self.base = _construct_recursive(base_cls)
-
-        for name, hint in hints.items():
+        for name, hint in typing.get_type_hints(type(self)).items():
             if isinstance(hint, type) and issubclass(hint, InputView):
                 setattr(self, name, hint(self))
-
-
-def _construct_recursive(cls: type) -> typing.Any:
-    """Build an empty pydantic-model tree: every nested `BaseModel` field
-    pre-constructed via `model_construct()`, every `_fields_set` empty.
-
-    Only recurses into fields whose annotation is *exactly* a `BaseModel`
-    subclass; unions (`X | None`), generics (`list[X]`, `dict[str, X]`),
-    `Annotated[X, ...]`, and non-BaseModel scalars are left at their
-    pydantic default.
-    """
-    kwargs: dict[str, typing.Any] = {}
-    for name, field in cls.model_fields.items():  # type: ignore[attr-defined]
-        annotation = field.annotation
-        if isinstance(annotation, type) and hasattr(annotation, "model_fields"):
-            kwargs[name] = _construct_recursive(annotation)
-    return cls.model_construct(_fields_set=set(), **kwargs)  # type: ignore[attr-defined]
