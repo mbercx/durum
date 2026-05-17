@@ -3,47 +3,24 @@
 import abc
 import typing
 
-from glom import Assign, glom
-
-
-class Adapter:
-    """Per-field two-way transform between user values and `base` paths.
-
-    Subclasses override `to_base` and/or `from_base`. `to_base(value)`
-    returns a sparse `{absolute_path: value}` map; dough writes each
-    entry via `glom.Assign`. `from_base(base)` receives the full `base`
-    and returns the user-facing value.
-
-    A direction left unoverridden raises `AttributeError` when accessed:
-    write-only fields have no `from_base`, read-only fields have no
-    `to_base`.
-    """
-
-    def to_base(self, value: typing.Any) -> dict[str, typing.Any]:
-        raise AttributeError(f"{type(self).__name__} is read-only (no to_base)")
-
-    def from_base(self, base: typing.Any) -> typing.Any:
-        raise AttributeError(f"{type(self).__name__} is write-only (no from_base)")
+from dough.inputs.adapter import Adapter
 
 
 class InputView:
     """Typed namespace over an owner's `base` state.
 
-    Subclasses declare annotated fields. Reads/writes route through
-    `glom` to `self._owner.base`, at this view's `_path`. Sub-view
-    fields (annotation pointing to another `InputView` subclass) are
-    instantiated with the appropriate path prefix. Adapter-backed
-    fields (annotation carrying an `Adapter` in its `Annotated`
-    metadata) dispatch through the adapter's `to_base` / `from_base`.
+    Subclasses declare annotated fields, each carrying an `Adapter` in
+    its `Annotated` metadata. Reads/writes route through the adapter's
+    `from_base` / `to_base`. Sub-view fields (annotation pointing to
+    another `InputView` subclass) are instantiated with the appropriate
+    path prefix.
     """
 
-    _fields: typing.ClassVar[frozenset[str]] = frozenset()
     _sub_fields: typing.ClassVar[dict[str, type["InputView"]]] = {}
     _adapters: typing.ClassVar[dict[str, Adapter]] = {}
 
     def __init_subclass__(cls) -> None:
         hints = typing.get_type_hints(cls, include_extras=True)
-        cls._fields = frozenset(name for name in hints if not name.startswith("_"))
         cls._sub_fields = {
             name: hint
             for name, hint in hints.items()
@@ -73,11 +50,6 @@ class InputView:
     def __getattr__(self, name: str) -> typing.Any:
         if name in self._adapters:
             return self._adapters[name].from_base(self._owner.base)
-        if name in self._fields:
-            try:
-                return glom(self._owner.base, ".".join(self._path + (name,)))
-            except Exception:
-                raise AttributeError(f"{type(self).__name__}.{name} not set") from None
         raise AttributeError(name)
 
     def __setattr__(self, name: str, value: typing.Any) -> None:
@@ -85,21 +57,13 @@ class InputView:
             raise AttributeError(
                 f"{type(self).__name__}.{name} is a sub-view; assign its leaf fields instead"
             )
-        if name not in self._fields:
+        if name not in self._adapters:
             raise AttributeError(f"{type(self).__name__} has no field {name!r}")
 
-        if name in self._adapters:
-            for path, val in self._adapters[name].to_base(value).items():
-                glom(self._owner.base, Assign(path, val, missing=dict))
-            return
-
-        glom(
-            self._owner.base,
-            Assign(".".join(self._path + (name,)), value, missing=dict),
-        )
+        self._adapters[name].to_base(self._owner.base, value)
 
     def __dir__(self) -> list[str]:
-        return sorted(set(object.__dir__(self)) | self._fields)
+        return sorted(set(object.__dir__(self)) | set(self._adapters))
 
 
 class BaseInput(abc.ABC):

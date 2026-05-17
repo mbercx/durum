@@ -3,21 +3,23 @@
 from typing import Annotated
 
 import pytest
+from glom import Assign, glom
 
 from dough.inputs import Adapter, BaseInput, InputView
 
 
 class Bidir(Adapter):
-    def to_base(self, value):
-        return {"system.nat": value["n"], "cell": {"vectors": value["cell"]}}
+    def to_base(self, base, value):
+        glom(base, Assign("system.nat", value["n"], missing=dict))
+        glom(base, Assign("cell.vectors", value["cell"], missing=dict))
 
     def from_base(self, base):
         return {"n": base["system"]["nat"], "cell": base["cell"]["vectors"]}
 
 
 class Innie(Adapter):
-    def to_base(self, value):
-        return {"control.flag": value}
+    def to_base(self, base, value):
+        glom(base, Assign("control.flag", value, missing=dict))
 
 
 class Outie(Adapter):
