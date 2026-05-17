@@ -86,9 +86,30 @@ class BaseInput(abc.ABC):
         elif base_cls is dict:
             self.base = {}
         else:
-            # Otherwise: assume pydantic BaseModel
-            self.base = base_cls.model_construct()
+            # Otherwise: assume pydantic BaseModel. Every node is
+            # constructed with `_fields_set=set()`; user writes mark
+            # fields set as normal (and `PathAdapter.to_base` propagates
+            # `fields_set` up the path on leaf writes), so
+            # `model_dump(exclude_unset=True)` still prunes correctly.
+            self.base = _construct_recursive(base_cls)
 
         for name, hint in hints.items():
             if isinstance(hint, type) and issubclass(hint, InputView):
                 setattr(self, name, hint(self))
+
+
+def _construct_recursive(cls: type) -> typing.Any:
+    """Build an empty pydantic-model tree: every nested `BaseModel` field
+    pre-constructed via `model_construct()`, every `_fields_set` empty.
+
+    Only recurses into fields whose annotation is *exactly* a `BaseModel`
+    subclass; unions (`X | None`), generics (`list[X]`, `dict[str, X]`),
+    `Annotated[X, ...]`, and non-BaseModel scalars are left at their
+    pydantic default.
+    """
+    kwargs: dict[str, typing.Any] = {}
+    for name, field in cls.model_fields.items():  # type: ignore[attr-defined]
+        annotation = field.annotation
+        if isinstance(annotation, type) and hasattr(annotation, "model_fields"):
+            kwargs[name] = _construct_recursive(annotation)
+    return cls.model_construct(_fields_set=set(), **kwargs)  # type: ignore[attr-defined]
