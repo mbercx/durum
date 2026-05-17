@@ -3,48 +3,50 @@
 import abc
 import typing
 
-from dough.inputs.adapter import Adapter
+from dough.inputs.adapter import Adapter, PathAdapter
 
 
 class InputView:
     """Typed namespace over an owner's `base` state.
 
-    Subclasses declare annotated fields, each carrying an `Adapter` in
-    its `Annotated` metadata. Reads/writes route through the adapter's
-    `from_base` / `to_base`. Sub-view fields (annotation pointing to
-    another `InputView` subclass) are instantiated with the appropriate
-    path prefix.
+    Subclasses declare annotated fields. Sub-view fields (annotation
+    pointing to another `InputView` subclass) compose nested namespaces.
+    Adapter-backed fields (annotation carrying an `Adapter` in its
+    `Annotated` metadata) dispatch through the adapter's `from_base` /
+    `to_base`. Any other annotated field falls back to a `PathAdapter`
+    keyed on `_path + (name,)`.
     """
-
-    _sub_fields: typing.ClassVar[dict[str, type["InputView"]]] = {}
-    _adapters: typing.ClassVar[dict[str, Adapter]] = {}
-
-    def __init_subclass__(cls) -> None:
-        hints = typing.get_type_hints(cls, include_extras=True)
-        cls._sub_fields = {
-            name: hint
-            for name, hint in hints.items()
-            if isinstance(hint, type) and issubclass(hint, InputView)
-        }
-        cls._adapters = {}
-        for name, hint in hints.items():
-            adapter = next(
-                (
-                    m
-                    for m in getattr(hint, "__metadata__", ())
-                    if isinstance(m, Adapter)
-                ),
-                None,
-            )
-            if adapter is not None:
-                cls._adapters[name] = adapter
 
     def __init__(self, owner: "BaseInput", path: tuple[str, ...] = ()) -> None:
         # Bypass our custom __setattr__ which only allows declared field writes.
         object.__setattr__(self, "_owner", owner)
         object.__setattr__(self, "_path", path)
 
-        for name, sub_cls in self._sub_fields.items():
+        sub_fields: dict[str, type[InputView]] = {}
+        adapters: dict[str, Adapter] = {}
+
+        for name, hint in typing.get_type_hints(
+            type(self), include_extras=True
+        ).items():
+            if name.startswith("_"):
+                continue
+            elif isinstance(hint, type) and issubclass(hint, InputView):
+                sub_fields[name] = hint
+            else:
+                adapter = next(
+                    (
+                        m
+                        for m in getattr(hint, "__metadata__", ())
+                        if isinstance(m, Adapter)
+                    ),
+                    None,
+                )
+                adapters[name] = adapter or PathAdapter(".".join(path + (name,)))
+
+        object.__setattr__(self, "_adapters", adapters)
+        object.__setattr__(self, "_sub_fields", sub_fields)
+
+        for name, sub_cls in sub_fields.items():
             object.__setattr__(self, name, sub_cls(owner, path + (name,)))
 
     def __getattr__(self, name: str) -> typing.Any:
