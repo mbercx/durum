@@ -155,3 +155,26 @@ def test_empty_construction():
     """`BaseInput()` starts with an empty dict `base`."""
     inp = MockInput()
     assert inp.base == {}
+
+
+def test_non_view_annotation_without_default_raises():
+    """Annotated non-View fields without a default are a typo / mistake."""
+
+    class Inp(BaseInput):
+        inputs: Top
+        unrelated: str
+
+    with pytest.raises(TypeError, match="must be `InputView` subclasses"):
+        Inp()
+
+
+def test_non_view_annotation_with_default_is_allowed():
+    """Annotated non-View fields with a default are a normal class attribute."""
+
+    class Inp(BaseInput):
+        inputs: Top
+        counter: int = 0
+
+    inp = Inp()
+    assert inp.counter == 0
+    assert isinstance(inp.inputs, Top)

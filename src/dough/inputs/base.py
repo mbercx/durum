@@ -18,19 +18,13 @@ class InputView:
     """
 
     def __init__(self, owner: "BaseInput", path: tuple[str, ...] = ()) -> None:
-        # Bypass our custom __setattr__ which only allows declared field writes.
-        object.__setattr__(self, "_owner", owner)
-        object.__setattr__(self, "_path", path)
-
         sub_fields: dict[str, type[InputView]] = {}
         adapters: dict[str, Adapter] = {}
 
         for name, hint in typing.get_type_hints(
             type(self), include_extras=True
         ).items():
-            if name.startswith("_"):
-                continue
-            elif isinstance(hint, type) and issubclass(hint, InputView):
+            if isinstance(hint, type) and issubclass(hint, InputView):
                 sub_fields[name] = hint
             else:
                 adapter = next(
@@ -43,6 +37,9 @@ class InputView:
                 )
                 adapters[name] = adapter or PathAdapter(".".join(path + (name,)))
 
+        # Bypass our custom __setattr__ which only allows declared field writes.
+        object.__setattr__(self, "_owner", owner)
+        object.__setattr__(self, "_path", path)
         object.__setattr__(self, "_adapters", adapters)
         object.__setattr__(self, "_sub_fields", sub_fields)
 
@@ -82,3 +79,9 @@ class BaseInput(abc.ABC):
         for name, hint in typing.get_type_hints(type(self)).items():
             if isinstance(hint, type) and issubclass(hint, InputView):
                 setattr(self, name, hint(self))
+            elif not hasattr(type(self), name):
+                raise TypeError(
+                    f"{type(self).__name__}.{name}: annotations on a `BaseInput` "
+                    f"subclass must be `InputView` subclasses or have a default "
+                    f"value (got {hint!r})"
+                )
