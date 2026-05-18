@@ -37,14 +37,15 @@ tests = [
   "pytest-cov",
   "pytest-regressions",
   "numpy",
-  "pydantic",
-  "dough[pint]",
+  "dough[all]",
 ]
 pre-commit = [
   "pre-commit",
   "mypy"
 ]
 pint = ["pint>0.24,<0.25"]
+pydantic = ["pydantic~=2.0"]
+all = ["dough[pint,pydantic]"]
 
 [dependency-groups]
 dev = [
