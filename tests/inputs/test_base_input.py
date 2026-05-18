@@ -178,3 +178,42 @@ def test_non_view_annotation_with_default_is_allowed():
     inp = Inp()
     assert inp.counter == 0
     assert isinstance(inp.inputs, Top)
+
+
+# --- `set_input` / `get_input` programmatic API -----------------------------
+
+
+def test_set_input_writes_leaf():
+    inp = MockInput()
+    inp.set_input("name", "alice")
+    assert inp._data == {"name": "alice"}
+
+
+def test_set_input_creates_intermediate_dicts():
+    inp = MockInput()
+    inp.set_input("mid.deep.value", 42)
+    assert inp._data == {"mid": {"deep": {"value": 42}}}
+
+
+def test_set_input_overwrites_existing_value():
+    inp = MockInput()
+    inp.set_input("name", "alice")
+    inp.set_input("name", "bob")
+    assert inp._data == {"name": "bob"}
+
+
+def test_get_input_reads_leaf():
+    inp = MockInput(data={"mid": {"deep": {"value": 7}}})
+    assert inp.get_input("mid.deep.value") == 7
+
+
+def test_get_input_unset_raises_attribute_error():
+    inp = MockInput()
+    with pytest.raises(AttributeError, match="value not set"):
+        inp.get_input("mid.deep.value")
+
+
+def test_set_then_get_round_trip():
+    inp = MockInput()
+    inp.set_input("mid.flag", True)
+    assert inp.get_input("mid.flag") is True
