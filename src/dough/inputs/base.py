@@ -7,13 +7,13 @@ from dough.inputs.adapter import Adapter, PathAdapter
 
 
 class InputView:
-    """Typed namespace over an owner's `base` state.
+    """Typed namespace over an owner's `_data` state.
 
     Subclasses declare annotated fields. Sub-view fields (annotation
     pointing to another `InputView` subclass) compose nested namespaces.
     Adapter-backed fields (annotation carrying an `Adapter` in its
-    `Annotated` metadata) dispatch through the adapter's `from_base` /
-    `to_base`. Any other annotated field falls back to a `PathAdapter`
+    `Annotated` metadata) dispatch through the adapter's `from_data` /
+    `to_data`. Any other annotated field falls back to a `PathAdapter`
     keyed on `_path + (name,)`.
     """
 
@@ -48,7 +48,7 @@ class InputView:
 
     def __getattr__(self, name: str) -> typing.Any:
         if name in self._adapters:
-            return self._adapters[name].from_base(self._owner.base)
+            return self._adapters[name].from_data(self._owner._data)
         raise AttributeError(name)
 
     def __setattr__(self, name: str, value: typing.Any) -> None:
@@ -59,7 +59,7 @@ class InputView:
         if name not in self._adapters:
             raise AttributeError(f"{type(self).__name__} has no field {name!r}")
 
-        self._adapters[name].to_base(self._owner.base, value)
+        self._adapters[name].to_data(self._owner._data, value)
 
     def __dir__(self) -> list[str]:
         return sorted(set(object.__dir__(self)) | set(self._adapters))
@@ -68,13 +68,13 @@ class InputView:
 class BaseInput(abc.ABC):
     """Bare-minimum input base.
 
-    `base` is always a `dict`. Subclasses declare one or more `InputView`
+    `_data` is always a `dict`. Subclasses declare one or more `InputView`
     subclasses as typed namespaces; view attribute names are the package
     author's choice.
     """
 
-    def __init__(self, base: dict[str, typing.Any] | None = None) -> None:
-        self.base = {} if base is None else base
+    def __init__(self, data: dict[str, typing.Any] | None = None) -> None:
+        self._data = {} if data is None else data
 
         for name, hint in typing.get_type_hints(type(self)).items():
             if isinstance(hint, type) and issubclass(hint, InputView):
