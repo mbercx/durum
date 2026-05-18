@@ -105,3 +105,69 @@ class BaseInput(abc.ABC):
         except PathAccessError:
             leaf = path.rsplit(".", 1)[-1]
             raise AttributeError(f"{leaf} not set") from None
+
+    def set_input_dict(self, data: dict[str, typing.Any], base_path: str = "") -> None:
+        """Write a nested dict into `_data`, leaf by leaf via `set_input`.
+
+        `base_path` anchors every key in `data` under that dotted prefix,
+        which lets callers write a deeper section without re-nesting the
+        input dict. Keys may themselves contain dots
+        (`{"some.nested.key": value}`) and are treated as paths under
+        `base_path`.
+        """
+        for key, value in data.items():
+            path = f"{base_path}.{key}" if base_path else key
+            if isinstance(value, dict):
+                self.set_input_dict(value, base_path=path)
+            else:
+                self.set_input(path, value)
+
+    def get_input_dict(
+        self,
+        paths: list[str] | dict[str, typing.Any] | None = None,
+        base_path: str = "",
+        skip_missing: bool = False,
+    ) -> dict[str, typing.Any]:
+        """Build a nested dict from values at the requested paths.
+
+        Paths can be a flat list of dotted strings (`["calc.type", "calc.spin"]`)
+        or a nested dict that factors common prefixes
+        (`{"calc": ["type", "spin"]}`). The two forms are equivalent.
+
+        With `paths=None`, returns the full `_data` dict (rooted at
+        `base_path` if given). The return value is the live underlying
+        dict — copy with `copy.deepcopy` if isolation is needed.
+
+        `base_path` anchors all requested paths under that dotted prefix.
+        The base does not appear in the returned dict.
+
+        When `skip_missing` is `True`, paths that are not set are omitted
+        from the result instead of raising `AttributeError`.
+        """
+        if paths is None:
+            return self.get_input(base_path) if base_path else self._data
+        result: dict[str, typing.Any] = {}
+        if isinstance(paths, dict):
+            for key, sub in paths.items():
+                sub_base = f"{base_path}.{key}" if base_path else key
+                result[key] = self.get_input_dict(
+                    sub, base_path=sub_base, skip_missing=skip_missing
+                )
+        else:
+            for leaf in paths:
+                if isinstance(leaf, dict):
+                    result.update(
+                        self.get_input_dict(
+                            leaf, base_path=base_path, skip_missing=skip_missing
+                        )
+                    )
+                    continue
+                path = f"{base_path}.{leaf}" if base_path else leaf
+                try:
+                    value = self.get_input(path)
+                except AttributeError:
+                    if skip_missing:
+                        continue
+                    raise
+                glom(result, Assign(leaf, value, missing=dict))
+        return result

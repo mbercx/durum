@@ -217,3 +217,81 @@ def test_set_then_get_round_trip():
     inp = MockInput()
     inp.set_input("mid.flag", True)
     assert inp.get_input("mid.flag") is True
+
+
+# --- `set_input_dict` / `get_input_dict` bulk API ---------------------------
+
+
+def test_set_input_dict_writes_nested():
+    inp = MockInput()
+    inp.set_input_dict({"name": "alice", "mid": {"flag": True, "deep": {"value": 42}}})
+    assert inp._data == {"name": "alice", "mid": {"flag": True, "deep": {"value": 42}}}
+
+
+def test_set_input_dict_with_base_path_anchors_writes():
+    inp = MockInput()
+    inp.set_input_dict({"flag": True, "deep": {"value": 42}}, base_path="mid")
+    assert inp._data == {"mid": {"flag": True, "deep": {"value": 42}}}
+
+
+def test_set_input_dict_dotted_keys_treated_as_paths():
+    inp = MockInput()
+    inp.set_input_dict({"mid": {"deep.value": 42}})
+    assert inp._data == {"mid": {"deep": {"value": 42}}}
+
+
+def test_get_input_dict_from_flat_paths():
+    inp = MockInput(
+        data={"name": "alice", "mid": {"flag": True, "deep": {"value": 42}}}
+    )
+    assert inp.get_input_dict(["name", "mid.flag"]) == {
+        "name": "alice",
+        "mid": {"flag": True},
+    }
+
+
+def test_get_input_dict_from_factored_dict():
+    inp = MockInput(
+        data={"name": "alice", "mid": {"flag": True, "deep": {"value": 42}}}
+    )
+    flat = inp.get_input_dict(["mid.flag", "mid.deep.value"])
+    factored = inp.get_input_dict({"mid": ["flag", {"deep": ["value"]}]})
+    assert flat == factored
+
+
+def test_get_input_dict_with_base_path_strips_prefix():
+    inp = MockInput(data={"mid": {"flag": True, "deep": {"value": 42}}})
+    assert inp.get_input_dict(["flag", "deep.value"], base_path="mid") == {
+        "flag": True,
+        "deep": {"value": 42},
+    }
+
+
+def test_get_input_dict_none_returns_full_tree():
+    data = {"name": "alice", "mid": {"flag": True}}
+    inp = MockInput(data=data)
+    assert inp.get_input_dict() is inp._data
+    assert inp.get_input_dict() == data
+
+
+def test_get_input_dict_none_with_base_path_returns_subtree():
+    inp = MockInput(data={"mid": {"flag": True, "deep": {"value": 42}}})
+    assert inp.get_input_dict(base_path="mid") == {"flag": True, "deep": {"value": 42}}
+
+
+def test_get_input_dict_missing_path_raises_by_default():
+    inp = MockInput(data={"name": "alice"})
+    with pytest.raises(AttributeError, match="count not set"):
+        inp.get_input_dict(["name", "count"])
+
+
+def test_get_input_dict_skip_missing_omits_unset_paths():
+    inp = MockInput(data={"name": "alice"})
+    assert inp.get_input_dict(["name", "count"], skip_missing=True) == {"name": "alice"}
+
+
+def test_set_then_get_dict_round_trip():
+    seed = {"name": "alice", "mid": {"flag": True, "deep": {"value": 42}}}
+    inp = MockInput()
+    inp.set_input_dict(seed)
+    assert inp.get_input_dict(["name", "mid.flag", "mid.deep.value"]) == seed
