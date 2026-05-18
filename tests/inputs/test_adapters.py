@@ -3,28 +3,27 @@
 from typing import Annotated
 
 import pytest
-from glom import Assign, glom
 
 from dough.inputs import Adapter, BaseInput, InputView
 
 
 class Bidir(Adapter):
-    def to_data(self, data, value):
-        glom(data, Assign("system.nat", value["n"], missing=dict))
-        glom(data, Assign("cell.vectors", value["cell"], missing=dict))
+    def to_input(self, inp, value):
+        inp.set_input("system.nat", value["n"])
+        inp.set_input("cell.vectors", value["cell"])
 
-    def from_data(self, data):
-        return {"n": data["system"]["nat"], "cell": data["cell"]["vectors"]}
+    def from_input(self, inp):
+        return {"n": inp.get_input("system.nat"), "cell": inp.get_input("cell.vectors")}
 
 
 class Innie(Adapter):
-    def to_data(self, data, value):
-        glom(data, Assign("control.flag", value, missing=dict))
+    def to_input(self, inp, value):
+        inp.set_input("control.flag", value)
 
 
 class Outie(Adapter):
-    def from_data(self, data):
-        return data["system"]["nat"] * 2
+    def from_input(self, inp):
+        return inp.get_input("system.nat") * 2
 
 
 class Inner(InputView):
