@@ -3,6 +3,8 @@
 import abc
 import typing
 
+from glom import Assign, PathAccessError, glom
+
 from dough.inputs.adapter import Adapter, PathAdapter
 
 
@@ -85,3 +87,21 @@ class BaseInput(abc.ABC):
                     f"subclass must be `InputView` subclasses or have a default "
                     f"value (got {hint!r})"
                 )
+
+    def set_input(self, path: str, value: typing.Any) -> None:
+        """Write `value` into `_data` at the dotted `path`.
+
+        Creates missing intermediate dicts.
+        """
+        glom(self._data, Assign(path, value, missing=dict))
+
+    def get_input(self, path: str) -> typing.Any:
+        """Read the value at the dotted `path` from `_data`.
+
+        Raises `AttributeError` if the path is not set.
+        """
+        try:
+            return glom(self._data, path)
+        except PathAccessError:
+            leaf = path.rsplit(".", 1)[-1]
+            raise AttributeError(f"{leaf} not set") from None
