@@ -9,22 +9,22 @@ from dough.inputs import Adapter, BaseInput, InputView
 
 
 class Bidir(Adapter):
-    def to_base(self, base, value):
-        glom(base, Assign("system.nat", value["n"], missing=dict))
-        glom(base, Assign("cell.vectors", value["cell"], missing=dict))
+    def to_data(self, data, value):
+        glom(data, Assign("system.nat", value["n"], missing=dict))
+        glom(data, Assign("cell.vectors", value["cell"], missing=dict))
 
-    def from_base(self, base):
-        return {"n": base["system"]["nat"], "cell": base["cell"]["vectors"]}
+    def from_data(self, data):
+        return {"n": data["system"]["nat"], "cell": data["cell"]["vectors"]}
 
 
 class Innie(Adapter):
-    def to_base(self, base, value):
-        glom(base, Assign("control.flag", value, missing=dict))
+    def to_data(self, data, value):
+        glom(data, Assign("control.flag", value, missing=dict))
 
 
 class Outie(Adapter):
-    def from_base(self, base):
-        return base["system"]["nat"] * 2
+    def from_data(self, data):
+        return data["system"]["nat"] * 2
 
 
 class Inner(InputView):
@@ -55,8 +55,8 @@ class Input(BaseInput):
 def test_bidirectional_adapter_writes_all_paths():
     inp = Input()
     inp.inputs.structure = {"n": 4, "cell": [[1, 0, 0], [0, 1, 0], [0, 0, 1]]}
-    assert inp.base["system"]["nat"] == 4
-    assert inp.base["cell"]["vectors"] == [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    assert inp._data["system"]["nat"] == 4
+    assert inp._data["cell"]["vectors"] == [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
 
 def test_bidirectional_adapter_round_trip():
@@ -77,14 +77,14 @@ def test_innie_only_read_raises():
 
 def test_outie_only_write_raises():
     inp = Input()
-    inp.base = {"system": {"nat": 3}}
+    inp._data = {"system": {"nat": 3}}
     with pytest.raises(AttributeError, match="read-only"):
         inp.inputs.derived = 5
 
 
 def test_outie_only_read_works():
     inp = Input()
-    inp.base = {"system": {"nat": 3}}
+    inp._data = {"system": {"nat": 3}}
     assert inp.inputs.derived == 6
 
 
@@ -92,8 +92,8 @@ def test_identity_and_adapter_coexist():
     inp = Input()
     inp.inputs.structure = {"n": 2, "cell": [[1, 0, 0], [0, 1, 0], [0, 0, 1]]}
     inp.inputs.label = "demo"
-    assert inp.base["system"]["nat"] == 2
-    assert inp.base["label"] == "demo"
+    assert inp._data["system"]["nat"] == 2
+    assert inp._data["label"] == "demo"
     assert inp.inputs.label == "demo"
 
 

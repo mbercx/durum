@@ -35,7 +35,7 @@ def test_inputs_is_view_instance():
 
 def test_top_level_leaf_read():
     inp = MockInput()
-    inp.base = {"name": "alice", "count": 3}
+    inp._data = {"name": "alice", "count": 3}
     assert inp.inputs.name == "alice"
     assert inp.inputs.count == 3
 
@@ -62,7 +62,7 @@ def test_dir_exposes_fields_for_tab_completion():
 
 def test_sub_mapping_read():
     inp = MockInput()
-    inp.base = {"mid": {"flag": True}}
+    inp._data = {"mid": {"flag": True}}
     assert inp.inputs.mid.flag is True
 
 
@@ -79,7 +79,7 @@ def test_sub_mapping_unset_raises():
 
 def test_three_level_recursion():
     inp = MockInput()
-    inp.base = {"mid": {"deep": {"value": 42}}}
+    inp._data = {"mid": {"deep": {"value": 42}}}
     assert inp.inputs.mid.deep.value == 42
     assert "value" in dir(inp.inputs.mid.deep)
 
@@ -88,19 +88,19 @@ def test_top_level_leaf_write():
     inp = MockInput()
     inp.inputs.name = "alice"
     inp.inputs.count = 3
-    assert inp.base == {"name": "alice", "count": 3}
+    assert inp._data == {"name": "alice", "count": 3}
 
 
 def test_nested_leaf_write_creates_parent_dict():
     inp = MockInput()
     inp.inputs.mid.flag = True
-    assert inp.base == {"mid": {"flag": True}}
+    assert inp._data == {"mid": {"flag": True}}
 
 
 def test_three_level_leaf_write():
     inp = MockInput()
     inp.inputs.mid.deep.value = 42
-    assert inp.base == {"mid": {"deep": {"value": 42}}}
+    assert inp._data == {"mid": {"deep": {"value": 42}}}
 
 
 def test_write_then_read_round_trip():
@@ -113,7 +113,7 @@ def test_overwrite_existing_value():
     inp = MockInput()
     inp.inputs.name = "alice"
     inp.inputs.name = "bob"
-    assert inp.base == {"name": "bob"}
+    assert inp._data == {"name": "bob"}
 
 
 def test_write_undeclared_raises():
@@ -128,33 +128,33 @@ def test_write_to_sub_mapping_raises():
         inp.inputs.mid = {"flag": True}
 
 
-# --- `base` constructor behaviour -------------------------------------------
+# --- `data` constructor behaviour -------------------------------------------
 
 
-def test_base_kwarg_seeds_state():
-    """Passing `base=` to the constructor uses that object as state."""
+def test_data_kwarg_seeds_state():
+    """Passing `data=` to the constructor uses that object as state."""
     seed = {"name": "alice", "count": 3}
-    inp = MockInput(base=seed)
-    assert inp.base is seed
+    inp = MockInput(data=seed)
+    assert inp._data is seed
     assert inp.inputs.name == "alice"
 
 
-def test_base_kwarg_does_not_validate_type():
-    """`base=` is pass-through; dough does not check it matches the annotation.
+def test_data_kwarg_does_not_validate_type():
+    """`data=` is pass-through; dough does not check it matches the annotation.
 
-    Pathological: declare `base: dict` but pass a list. Construction
+    Pathological: declare a `dict` shape but pass a list. Construction
     succeeds; reads/writes break later when glom navigates the wrong shape.
     """
-    inp = MockInput(base=[1, 2, 3])
-    assert inp.base == [1, 2, 3]
+    inp = MockInput(data=[1, 2, 3])
+    assert inp._data == [1, 2, 3]
     with pytest.raises(Exception):
         inp.inputs.name
 
 
 def test_empty_construction():
-    """`BaseInput()` starts with an empty dict `base`."""
+    """`BaseInput()` starts with an empty `_data` dict."""
     inp = MockInput()
-    assert inp.base == {}
+    assert inp._data == {}
 
 
 def test_non_view_annotation_without_default_raises():
