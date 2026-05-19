@@ -220,6 +220,21 @@ def test_set_then_get_round_trip():
     assert inp.get_input("mid.flag") is True
 
 
+def test_base_path_anchors_view_in_data():
+    """An `InputView` subclass with `_base_path` set writes under that prefix."""
+
+    class Anchored(InputView):
+        _base_path = "toml.calculation"
+        type: str
+
+    class AnchoredInput(BaseInput):
+        calc: Anchored
+
+    inp = AnchoredInput()
+    inp.calc.type = "relax"
+    assert inp._data == {"toml": {"calculation": {"type": "relax"}}}
+
+
 # --- `set_input_dict` / `get_input_dict` bulk API ---------------------------
 
 

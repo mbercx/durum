@@ -17,9 +17,20 @@ class InputView:
     `Annotated` metadata) dispatch through the adapter's `from_input` /
     `to_input`. Any other annotated field falls back to a `PathAdapter`
     keyed on `_path + (name,)`.
+
+    Subclasses may pin themselves to a fixed location in `_data` by
+    setting `_base_path` to a dotted string. The view then anchors
+    reads and writes under that prefix regardless of where it is
+    mounted. Codegen-emitted views use this to encode their schema
+    position; hand-written views typically leave it empty (root).
     """
 
+    _base_path: typing.ClassVar[str] = ""
+
     def __init__(self, owner: "BaseInput", path: tuple[str, ...] = ()) -> None:
+        if self._base_path:
+            path = tuple(self._base_path.split("."))
+
         sub_fields: dict[str, type[InputView]] = {}
         adapters: dict[str, Adapter] = {}
 
