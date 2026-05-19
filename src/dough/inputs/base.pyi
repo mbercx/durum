@@ -2,11 +2,15 @@
 
 import typing
 
+from pydantic import BaseModel
+
 class InputView:
     """Typed namespace over an owner's `_data` state."""
 
 class BaseInput:
     """Bare-minimum input base."""
+
+    base_model: typing.ClassVar[type[BaseModel] | None]
 
     def __init__(self, data: typing.Any = None) -> None: ...
     def set_input(self, path: str, value: typing.Any) -> None: ...
@@ -20,3 +24,4 @@ class BaseInput:
         base_path: str = ...,
         skip_missing: bool = ...,
     ) -> dict[str, typing.Any]: ...
+    def validate(self) -> BaseModel: ...

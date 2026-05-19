@@ -1,4 +1,5 @@
 import pytest
+from pydantic import BaseModel, Field, ValidationError
 
 from dough.inputs import BaseInput, InputView
 
@@ -295,3 +296,61 @@ def test_set_then_get_dict_round_trip():
     inp = MockInput()
     inp.set_input_dict(seed)
     assert inp.get_input_dict(["name", "mid.flag", "mid.deep.value"]) == seed
+
+
+# --- `base_model` schema validation ----------------------------------------
+
+
+class DeepModel(BaseModel):
+    value: int
+
+
+class MidModel(BaseModel):
+    deep: DeepModel
+    flag: bool
+
+
+class TopModel(BaseModel):
+    mid: MidModel
+    name: str
+    count: int = Field(gt=0)
+
+
+class ValidatedInput(BaseInput):
+    base_model = TopModel
+    inputs: Top
+
+
+def test_set_input_validates_against_base_model():
+    inp = ValidatedInput()
+    with pytest.raises(ValidationError):
+        inp.set_input("count", -1)
+
+
+def test_set_input_coerces_via_base_model():
+    inp = ValidatedInput()
+    inp.set_input("count", "3")
+    assert inp._data["count"] == 3
+
+
+def test_validate_returns_validated_model():
+    inp = ValidatedInput()
+    inp.set_input_dict(
+        {"name": "alice", "count": 3, "mid": {"flag": True, "deep": {"value": 42}}}
+    )
+    model = inp.validate()
+    assert isinstance(model, TopModel)
+    assert model.name == "alice"
+
+
+def test_validate_raises_on_incomplete_data():
+    inp = ValidatedInput()
+    inp.set_input("name", "alice")
+    with pytest.raises(ValidationError):
+        inp.validate()
+
+
+def test_validate_raises_typeerror_without_base_model():
+    inp = MockInput()
+    with pytest.raises(TypeError, match="no `base_model` attached"):
+        inp.validate()
