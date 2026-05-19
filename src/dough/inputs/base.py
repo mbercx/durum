@@ -73,7 +73,14 @@ class BaseInput(abc.ABC):
     `_data` is always a `dict`. Subclasses declare one or more `InputView`
     subclasses as typed namespaces; view attribute names are the package
     author's choice.
+
+    Subclasses may attach a pydantic `BaseModel` class via the `base_model`
+    class attribute. When set, `set_input` validates each leaf against the
+    schema at set time, and `validate` checks the whole `_data` against
+    the schema at write input time.
     """
+
+    base_model: typing.ClassVar[typing.Any] = None
 
     def __init__(self, data: dict[str, typing.Any] | None = None) -> None:
         self._data = {} if data is None else data
@@ -91,8 +98,15 @@ class BaseInput(abc.ABC):
     def set_input(self, path: str, value: typing.Any) -> None:
         """Write `value` into `_data` at the dotted `path`.
 
-        Creates missing intermediate dicts.
+        Creates missing intermediate dicts. When `base_model` is set, the
+        value is first validated against the schema's annotation for
+        `path` and any coercion is applied before the write.
         """
+        if self.base_model is not None:
+            from dough.inputs.validation import validate_leaf
+
+            value = validate_leaf(self.base_model, path, value)
+
         glom(self._data, Assign(path, value, missing=dict))
 
     def get_input(self, path: str) -> typing.Any:
@@ -117,6 +131,7 @@ class BaseInput(abc.ABC):
         """
         for key, value in data.items():
             path = f"{base_path}.{key}" if base_path else key
+
             if isinstance(value, dict):
                 self.set_input_dict(value, base_path=path)
             else:
@@ -146,7 +161,9 @@ class BaseInput(abc.ABC):
         """
         if paths is None:
             return self.get_input(base_path) if base_path else self._data
+
         result: dict[str, typing.Any] = {}
+
         if isinstance(paths, dict):
             for key, sub in paths.items():
                 sub_base = f"{base_path}.{key}" if base_path else key
@@ -162,12 +179,34 @@ class BaseInput(abc.ABC):
                         )
                     )
                     continue
+
                 path = f"{base_path}.{leaf}" if base_path else leaf
+
                 try:
                     value = self.get_input(path)
                 except AttributeError:
                     if skip_missing:
                         continue
                     raise
+
                 glom(result, Assign(leaf, value, missing=dict))
+
         return result
+
+    def validate(self) -> typing.Any:
+        """Validate the whole `_data` dict against the attached schema.
+
+        Returns the validated pydantic model. Catches required-but-unset
+        fields and cross-field rules that per-leaf validation cannot
+        see.
+
+        Raises `TypeError` when no `base_model` is attached on the
+        subclass.
+        """
+        if self.base_model is None:
+            raise TypeError(
+                f"{type(self).__name__} has no `base_model` attached; "
+                f"no validation is possible."
+            )
+
+        return self.base_model.model_validate(self._data)
