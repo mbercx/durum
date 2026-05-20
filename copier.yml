@@ -19,6 +19,6 @@ _tasks:
     --data 'type_check=strict'
     --data 'coverage=codecov'
     https://github.com/mbercx/python-copier .
-  - "uv add --quiet 'dough[pint]>=0.5,<0.6'"
+  - "uv add --quiet 'dough[pint]>=0.6,<0.7'"
   - "uv add --quiet --optional tests pytest-regressions"
   - python -c "from pathlib import Path; p = Path('pyproject.toml'); t = p.read_text(); b = '\n[[tool.mypy.overrides]]\nmodule = [\"glom\"]\nignore_missing_imports = true\n'; p.write_text(t + b) if '\"glom\"' not in t else None"
