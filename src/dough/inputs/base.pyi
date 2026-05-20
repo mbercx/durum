@@ -7,6 +7,10 @@ from pydantic import BaseModel
 class InputView:
     """Typed namespace over an owner's `_data` state."""
 
+    _base_path: typing.ClassVar[str]
+
+    def __init__(self, owner: "BaseInput", path: tuple[str, ...] = ()) -> None: ...
+
 class BaseInput:
     """Bare-minimum input base."""
 
