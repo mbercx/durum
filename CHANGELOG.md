@@ -1,5 +1,37 @@
 # Changelog
 
+## v0.6.0
+
+### 💥 Breaking changes
+
+* `Adapter`: Route through `BaseInput.set_input` / `get_input` [[96d8243](https://github.com/mbercx/dough/commit/96d82437838d026687780131fdc2046741344fd3)]
+* `BaseInput`: Rename `base` to `_data` [[2e1e61e](https://github.com/mbercx/dough/commit/2e1e61e860edc258aaf1300117540939ff6d12a6)]
+* `BaseInput`: Restrict `base` to a plain dict [[b3abc5d](https://github.com/mbercx/dough/commit/b3abc5deea599912c66fb1e535dd76cf21fa7264)]
+
+### 📦 Dependency updates
+
+* `pyproject`: Add `pydantic` and `all` optional extras [[418959f](https://github.com/mbercx/dough/commit/418959f8a467a6d2ef309f1e8903a27f0a8d3c5a)]
+
+### ✨ New features
+
+* `generate_views`: emit `InputView`s from pydantic models [[9eb20d4](https://github.com/mbercx/dough/commit/9eb20d40247e0c428a1b3ad4a3dc6caebd31ed2b)]
+* `InputView`: Add `_base_path` to pin a view's anchor [[4031312](https://github.com/mbercx/dough/commit/4031312dc7b0eb4cff92112023354603635a39db)]
+* `BaseInput`: Add `base_model` schema-driven validation [[8ca83f8](https://github.com/mbercx/dough/commit/8ca83f82b07c09731411f92f0050b6d4f84c880f)]
+* `BaseInput`: Add `set_input_dict` / `get_input_dict` bulk API [[44d501a](https://github.com/mbercx/dough/commit/44d501a4df2ed696166abd965a8464b4a4976451)]
+* `BaseInput`: Add `set_input` / `get_input` programmatic API [[6afc199](https://github.com/mbercx/dough/commit/6afc199bbd067451170ca9b1725b5c41e83a1913)]
+* `BaseInput`: Recursively model_construct nested pydantic submodels [[fd24f50](https://github.com/mbercx/dough/commit/fd24f50b6dbc5d8a843a1873bd1a17f948478959)]
+* `PathAdapter`: Add adapter for dict and `BaseModel` bases [[4518f5a](https://github.com/mbercx/dough/commit/4518f5a6e4cc73937f65793de038d8b66ab0ac04)]
+* `BaseInput`: Default-construct pydantic `base` via `model_construct` [[a99da79](https://github.com/mbercx/dough/commit/a99da7909db7d85319ed457bdddf0c29ba2e6f00)]
+
+### 👌 Improvements
+
+* `BaseInput`: Tighten annotation-walk semantics [[332b30e](https://github.com/mbercx/dough/commit/332b30e487aba6a5037006f88e428b7c07a7649e)]
+
+### 🐛 Bug fixes
+
+* `PathAdapter`: Translate glom misses to AttributeError on read [[2477968](https://github.com/mbercx/dough/commit/2477968ee908a7e6bfb6e4c5aa5e529e60aca4db)]
+* `InputView`: Restore path-based fallback adapter [[33274f0](https://github.com/mbercx/dough/commit/33274f0d6979d8c263a6e811f1ac4e462b6c7033)]
+
 ## v0.5.0
 
 ### ✨ New features
