@@ -48,7 +48,32 @@ def generate_views(module: types.ModuleType) -> str:
             if base in candidates:
                 parents.add(base)
 
-    models = [m for m in candidates if m not in parents]
+    # Drop candidates that only appear as the element type of a container field
+    # (`list[X]`, `tuple[X, ...]`, etc.) and any of their subclasses. Container
+    # elements are dynamic — they have no static path to anchor a view on, so
+    # they live as raw dicts in `_data`; pydantic validates them at write time.
+    container_elements: set[type[BaseModel]] = set()
+
+    for cls in candidates:
+        for field in cls.model_fields.values():
+            origin = typing.get_origin(field.annotation)
+
+            if origin in (types.UnionType, typing.Union, None):
+                continue
+
+            for arg in typing.get_args(field.annotation):
+                if isinstance(arg, type) and issubclass(arg, BaseModel):
+                    container_elements.add(arg)
+
+    container_subclasses: set[type[BaseModel]] = set(container_elements)
+
+    for cls in candidates:
+        if any(issubclass(cls, parent) for parent in container_elements):
+            container_subclasses.add(cls)
+
+    models = [
+        m for m in candidates if m not in parents and m not in container_subclasses
+    ]
 
     def submodel_of(annotation: typing.Any) -> type[BaseModel] | None:
         """Pick the BaseModel subclass out of an annotation (direct or in a union)."""

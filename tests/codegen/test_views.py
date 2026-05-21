@@ -5,6 +5,7 @@ on it, and check the resulting source string both structurally (substring /
 regex checks) and syntactically (`compile()` on the output).
 """
 
+import sys
 import types
 import typing
 
@@ -137,14 +138,91 @@ def test_imported_basemodel_is_skipped(assert_compiles):
     assert "class ImportedView(InputView):" not in source
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 12),
+    reason="pydantic on Python 3.10/3.11 strips the generic argument from "
+    "`list[Model]` annotations, defeating the rendered-annotation assertion.",
+)
+def test_list_element_model_gets_no_view(make_module, assert_compiles):
+    """A model that only appears as the element type of `list[X]` gets no view.
+
+    List elements have dynamic indices, so they cannot anchor a static
+    typed sub-view. They live as raw dicts in `_data`; pydantic validates
+    them at write time. The container model still gets a view, while the
+    element type is imported as a raw class and rendered as `list[Element]`.
+    """
+
+    class Row(BaseModel):
+        species: str
+        position: tuple[float, float, float]
+
+    class Card(BaseModel):
+        units: str
+        rows: list[Row]
+
+    source = generate_views(make_module("demo", Row, Card))
+    assert_compiles(source)
+
+    assert "class CardView(InputView):" in source
+    assert "class RowView" not in source
+    assert "rows: list[Row]" in source
+    assert "from demo import Row" in source
+
+
+def test_optional_submodel_is_not_treated_as_container(make_module, assert_compiles):
+    """A `Foo | None` field must still get a sub-view, not be dropped as a container element.
+
+    Regression guard: the container-element pass only fires on real
+    container origins (`list`, `tuple`, ...); unions of `Foo | None`
+    must continue to produce a typed sub-view for `Foo`.
+    """
+
+    class Inner(BaseModel):
+        x: int = 0
+
+    class Outer(BaseModel):
+        inner: Inner | None = None
+
+    source = generate_views(make_module("demo", Inner, Outer))
+    assert_compiles(source)
+
+    assert "class InnerView(InputView):" in source
+    assert "inner: InnerView" in source
+
+
+def test_subclasses_of_container_element_are_also_dropped(make_module, assert_compiles):
+    """Polymorphic list elements: subclasses of a container-element type
+    are themselves treated as elements.
+
+    A `list[Base]` field accepts any subclass of `Base`; none of those
+    subclasses can anchor a static view either, so they must also be dropped.
+    """
+
+    class Param(BaseModel):
+        value: float
+
+    class SubParam(Param):
+        u: float = 0.0
+
+    class Card(BaseModel):
+        params: list[Param]
+
+    source = generate_views(make_module("demo", Param, SubParam, Card))
+    assert_compiles(source)
+
+    assert "class CardView(InputView):" in source
+    assert "class ParamView" not in source
+    assert "class SubParamView" not in source
+
+
 def test_parent_only_base_class_is_dropped(make_module, assert_compiles):
     """A `BaseModel` subclass used only as a base for other module classes
     gets no view of its own.
 
-    Schema authors commonly declare field-less marker bases — `Namelist`,
-    `EspressoInput`, etc. — that contribute only inheritance scaffolding.
-    Without dropping them, codegen would emit empty views and the walker
-    would see multiple unreferenced "roots", breaking `_base_path` resolution.
+    Schema authors commonly declare field-less marker bases that contribute
+    only inheritance scaffolding. Without dropping them, codegen would emit
+    empty views and the walker would see multiple unreferenced "roots",
+    breaking `_base_path` resolution.
     """
 
     class Marker(BaseModel):
