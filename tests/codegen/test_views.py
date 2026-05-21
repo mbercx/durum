@@ -83,6 +83,43 @@ def test_user_type_from_other_module_imports_correctly(make_module, assert_compi
     assert "path: Path" in source
 
 
+def test_private_submodule_resolves_to_public_parent(make_module, assert_compiles):
+    """A user type whose `__module__` points at a private `_submodule`
+    that the parent package re-exports gets imported from the parent.
+
+    Mirrors the real-world case on Python 3.13 where
+    `Path.__module__ == "pathlib._local"`. The renderer must walk up
+    `__module__` and pick the shallowest ancestor that still exposes the
+    class by name.
+    """
+    parent = types.ModuleType("public_pkg")
+    private = types.ModuleType("public_pkg._impl")
+
+    class Widget:
+        pass
+
+    Widget.__module__ = "public_pkg._impl"
+    private.Widget = Widget
+    parent.Widget = Widget  # public re-export
+
+    sys.modules["public_pkg"] = parent
+    sys.modules["public_pkg._impl"] = private
+    try:
+
+        class Cfg(BaseModel):
+            model_config = {"arbitrary_types_allowed": True}
+            w: Widget = Field(default_factory=Widget)
+
+        source = generate_views(make_module("demo", Cfg))
+    finally:
+        del sys.modules["public_pkg._impl"]
+        del sys.modules["public_pkg"]
+
+    assert_compiles(source)
+    assert "from public_pkg import Widget" in source
+    assert "public_pkg._impl" not in source
+
+
 class NestedOuter:
     """Fixture for `test_nested_class_is_imported_via_outer_name`.
 

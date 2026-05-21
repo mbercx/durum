@@ -220,9 +220,25 @@ def generate_views(module: types.ModuleType) -> str:
         "",
         "from dough.inputs import InputView",
     ]
+
+    def public_module(cls: type) -> str:
+        """Walk up `cls.__module__` parents; return the shallowest that re-exports `cls`.
+
+        Picks the public import path when a stdlib type lives in a private
+        submodule that the parent module re-exports (e.g. `Path.__module__ ==
+        "pathlib._local"` on Python 3.13 → `"pathlib"`).
+        """
+        parts = cls.__module__.split(".")
+        for depth in range(1, len(parts) + 1):
+            candidate = ".".join(parts[:depth])
+            mod = sys.modules.get(candidate)
+            if mod is not None and getattr(mod, cls.__name__, None) is cls:
+                return candidate
+        return cls.__module__
+
     by_module: dict[str, list[str]] = {}
     for cls in user_types:
-        by_module.setdefault(cls.__module__, []).append(cls.__name__)
+        by_module.setdefault(public_module(cls), []).append(cls.__name__)
     for mod in sorted(by_module):
         names = sorted(set(by_module[mod]))
         imports.append(f"from {mod} import {', '.join(names)}")
