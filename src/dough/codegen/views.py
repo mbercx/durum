@@ -131,8 +131,8 @@ def generate_views(module: types.ModuleType) -> str:
     # are bare annotations (resolved at runtime via PathAdapter). Field
     # descriptions become attribute docstrings on the next line, and
     # any non-builtin types encountered are collected into `user_types`
-    # for the import block.
-    user_types: set[str] = set()
+    # for the import block, grouped by source module.
+    user_types: set[type] = set()
     class_blocks: list[str] = []
 
     def render_annotation(annotation: typing.Any) -> str:
@@ -146,7 +146,7 @@ def generate_views(module: types.ModuleType) -> str:
         if isinstance(annotation, type):
             if annotation.__module__ == "builtins":
                 return annotation.__name__
-            user_types.add(annotation.__name__)
+            user_types.add(annotation)
             return annotation.__name__
 
         origin = typing.get_origin(annotation)
@@ -205,8 +205,12 @@ def generate_views(module: types.ModuleType) -> str:
         "",
         "from dough.inputs import InputView",
     ]
-    if user_types:
-        imports.append(f"from {module.__name__} import {', '.join(sorted(user_types))}")
+    by_module: dict[str, list[str]] = {}
+    for cls in user_types:
+        by_module.setdefault(cls.__module__, []).append(cls.__name__)
+    for mod in sorted(by_module):
+        names = sorted(set(by_module[mod]))
+        imports.append(f"from {mod} import {', '.join(names)}")
 
     header = f"{docstring}\n\n" + "\n".join(imports)
 
