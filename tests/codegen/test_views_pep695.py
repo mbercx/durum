@@ -5,7 +5,9 @@ on Python 3.10 / 3.11 — does not break collection on older interpreters.
 The conftest's `collect_ignore` skips this file outside 3.12+.
 """
 
-from pydantic import BaseModel
+from typing import Annotated
+
+from pydantic import BaseModel, Field
 
 from dough.codegen import generate_views
 
@@ -27,3 +29,25 @@ def test_pep_695_type_alias_is_unwrapped(make_module, assert_compiles):
 
     assert "w: int" in source
     assert "Width" not in source
+
+
+def test_pep_695_alias_over_annotated_is_unwrapped(make_module, assert_compiles):
+    """A PEP 695 alias wrapping `Annotated[T, Field(...)]` collapses to `T`.
+
+    Pydantic strips `Annotated` metadata from `field.annotation` on direct
+    field declarations, but a `TypeAliasType` hides the inner `Annotated`
+    from pydantic. After the alias unwrap recurses on `alias.__value__`,
+    the renderer must then unwrap the revealed `Annotated[T, ...]` to `T`.
+    """
+    type PositiveInt = Annotated[int, Field(gt=0)]
+
+    class Cfg(BaseModel):
+        n: PositiveInt = 1
+
+    source = generate_views(make_module("demo", Cfg))
+    assert_compiles(source)
+
+    assert "n: int" in source
+    assert "PositiveInt" not in source
+    assert "Annotated" not in source
+    assert "Field" not in source
