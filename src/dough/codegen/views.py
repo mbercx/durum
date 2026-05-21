@@ -107,6 +107,9 @@ def generate_views(module: types.ModuleType) -> str:
         origin = typing.get_origin(annotation)
         args = typing.get_args(annotation)
 
+        if origin is typing.Annotated:
+            return render_annotation(args[0])
+
         if origin is typing.Literal:
             return f"Literal[{', '.join(repr(a) for a in args)}]"
 
