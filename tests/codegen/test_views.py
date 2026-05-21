@@ -83,6 +83,48 @@ def test_user_type_from_other_module_imports_correctly(make_module, assert_compi
     assert "path: Path" in source
 
 
+class NestedOuter:
+    """Fixture for `test_nested_class_is_imported_via_outer_name`.
+
+    Defined at module scope so the inner class's `__qualname__` is the clean
+    `NestedOuter.NestedInner` form. A function-local nested class would
+    carry a `<test_name>.<locals>.` prefix that defeats the outermost-name
+    lookup in the codegen.
+    """
+
+    class NestedInner:
+        pass
+
+
+def test_nested_class_is_imported_via_outer_name(make_module, assert_compiles):
+    """A nested user type (qualname `Outer.Inner`) is referenced via its
+    dotted qualname, and only the outer class is imported.
+
+    The bare nested name is not importable from the source module, so the
+    renderer must walk up to the outermost enclosing class for the import
+    and emit `Outer.Inner` at every use site.
+    """
+
+    class Cfg(BaseModel):
+        model_config = {"arbitrary_types_allowed": True}
+        item: NestedOuter.NestedInner = Field(default_factory=NestedOuter.NestedInner)
+
+    module = make_module("demo", Cfg)
+    module.NestedOuter = NestedOuter
+    NestedOuter.__module__ = "demo"
+    NestedOuter.NestedInner.__module__ = "demo"
+    sys.modules["demo"] = module
+    try:
+        source = generate_views(module)
+    finally:
+        del sys.modules["demo"]
+    assert_compiles(source)
+
+    assert "from demo import NestedOuter" in source
+    assert "from demo import NestedInner" not in source
+    assert "item: NestedOuter.NestedInner" in source
+
+
 def test_field_description_becomes_attribute_docstring(make_module, assert_compiles):
     """`Field(description=...)` → attribute docstring on the next line; missing description → none."""
 
