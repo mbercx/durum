@@ -26,7 +26,7 @@ from pydantic import BaseModel
 
 def generate_views(module: types.ModuleType) -> str:
     """Render a `views.py` source string for every BaseModel in `module`."""
-    models: list[type[BaseModel]] = []
+    candidates: list[type[BaseModel]] = []
     seen: set[int] = set()
     for value in vars(module).values():
         if (
@@ -36,8 +36,19 @@ def generate_views(module: types.ModuleType) -> str:
             and value.__module__ == module.__name__
             and id(value) not in seen
         ):
-            models.append(value)
+            candidates.append(value)
             seen.add(id(value))
+
+    # Drop any candidate that exists only as a base class for another candidate.
+    # These contribute no fields of their own and would otherwise show up as
+    # unreferenced root candidates that derail `_base_path` resolution.
+    parents: set[type[BaseModel]] = set()
+    for cls in candidates:
+        for base in cls.__mro__[1:]:
+            if base in candidates:
+                parents.add(base)
+
+    models = [m for m in candidates if m not in parents]
 
     def submodel_of(annotation: typing.Any) -> type[BaseModel] | None:
         """Pick the BaseModel subclass out of an annotation (direct or in a union)."""
