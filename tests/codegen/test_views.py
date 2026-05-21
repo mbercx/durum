@@ -62,6 +62,27 @@ def test_user_type_is_imported(make_module, assert_compiles):
     assert "color: Color" in source
 
 
+def test_user_type_from_other_module_imports_correctly(make_module, assert_compiles):
+    """Non-builtin types imported from outside the target module are
+    grouped by their own `__module__`, not the codegen target module.
+
+    For example a schema that uses `pathlib.Path` must emit
+    `from pathlib import Path`, not
+    `from <target_module> import Path`.
+    """
+    from pathlib import Path
+
+    class Cfg(BaseModel):
+        path: Path = Path(".")
+
+    source = generate_views(make_module("demo", Cfg))
+    assert_compiles(source)
+
+    assert "from demo import Path" not in source
+    assert "import Path" in source
+    assert "path: Path" in source
+
+
 def test_field_description_becomes_attribute_docstring(make_module, assert_compiles):
     """`Field(description=...)` → attribute docstring on the next line; missing description → none."""
 
