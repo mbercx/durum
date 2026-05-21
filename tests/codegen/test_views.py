@@ -137,6 +137,29 @@ def test_imported_basemodel_is_skipped(assert_compiles):
     assert "class ImportedView(InputView):" not in source
 
 
+def test_parent_only_base_class_is_dropped(make_module, assert_compiles):
+    """A `BaseModel` subclass used only as a base for other module classes
+    gets no view of its own.
+
+    Schema authors commonly declare field-less marker bases — `Namelist`,
+    `EspressoInput`, etc. — that contribute only inheritance scaffolding.
+    Without dropping them, codegen would emit empty views and the walker
+    would see multiple unreferenced "roots", breaking `_base_path` resolution.
+    """
+
+    class Marker(BaseModel):
+        """Field-less base — used only as scaffolding."""
+
+    class Real(Marker):
+        x: int = 0
+
+    source = generate_views(make_module("demo", Marker, Real))
+    assert_compiles(source)
+
+    assert "class RealView(InputView):" in source
+    assert "class MarkerView" not in source
+
+
 def test_aliased_class_emits_one_view(make_module, assert_compiles):
     """A class bound to multiple names in the module is rendered once.
 
