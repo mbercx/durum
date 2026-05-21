@@ -26,16 +26,18 @@ from pydantic import BaseModel
 
 def generate_views(module: types.ModuleType) -> str:
     """Render a `views.py` source string for every BaseModel in `module`."""
-    models = [
-        value
-        for value in vars(module).values()
+    models: list[type[BaseModel]] = []
+    seen: set[int] = set()
+    for value in vars(module).values():
         if (
             isinstance(value, type)
             and issubclass(value, BaseModel)
             and value is not BaseModel
             and value.__module__ == module.__name__
-        )
-    ]
+            and id(value) not in seen
+        ):
+            models.append(value)
+            seen.add(id(value))
 
     def submodel_of(annotation: typing.Any) -> type[BaseModel] | None:
         """Pick the BaseModel subclass out of an annotation (direct or in a union)."""

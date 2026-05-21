@@ -137,6 +137,28 @@ def test_imported_basemodel_is_skipped(assert_compiles):
     assert "class ImportedView(InputView):" not in source
 
 
+def test_aliased_class_emits_one_view(make_module, assert_compiles):
+    """A class bound to multiple names in the module is rendered once.
+
+    Module-level aliases (`Card = BaseModel`) are a common re-export idiom;
+    the codegen must dedupe by class identity rather than emit one view per
+    name, otherwise the second definition shadows the first and root
+    resolution gets confused.
+    """
+
+    class Cfg(BaseModel):
+        x: int = 0
+
+    module = make_module("demo", Cfg)
+    module.Alias = Cfg  # second name pointing at the same class
+
+    source = generate_views(module)
+    assert_compiles(source)
+
+    assert source.count("class CfgView(InputView):") == 1
+    assert "class AliasView" not in source
+
+
 def test_single_root_nested_tree(make_module, assert_compiles):
     """Schema tree with one root → each model gets the correct dotted `_base_path`."""
 
