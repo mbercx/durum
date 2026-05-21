@@ -146,6 +146,21 @@ def generate_views(module: types.ModuleType) -> str:
         if isinstance(annotation, type):
             if annotation.__module__ == "builtins":
                 return annotation.__name__
+            # For nested classes (qualname contains a dot), import the
+            # outermost enclosing class and refer to the nested one via
+            # its dotted qualname.
+            qualname = annotation.__qualname__
+
+            if "." in qualname:
+                outer_name = qualname.split(".", 1)[0]
+                source_module = sys.modules.get(annotation.__module__)
+                outer = (
+                    getattr(source_module, outer_name, None) if source_module else None
+                )
+                if outer is not None:
+                    user_types.add(outer)
+                    return qualname
+
             user_types.add(annotation)
             return annotation.__name__
 
