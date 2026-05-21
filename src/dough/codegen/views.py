@@ -71,8 +71,15 @@ def generate_views(module: types.ModuleType) -> str:
         if any(issubclass(cls, parent) for parent in container_elements):
             container_subclasses.add(cls)
 
+    # Drop candidates that declare no fields of their own. An empty view has
+    # nothing to read or write, and it would surface as an unreferenced root
+    # candidate that derails `_base_path` resolution for everything else.
+    field_less = {cls for cls in candidates if not cls.model_fields}
+
     models = [
-        m for m in candidates if m not in parents and m not in container_subclasses
+        m
+        for m in candidates
+        if m not in parents and m not in container_subclasses and m not in field_less
     ]
 
     def submodel_of(annotation: typing.Any) -> type[BaseModel] | None:

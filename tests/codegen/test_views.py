@@ -215,6 +215,27 @@ def test_subclasses_of_container_element_are_also_dropped(make_module, assert_co
     assert "class SubParamView" not in source
 
 
+def test_field_less_model_is_dropped(make_module, assert_compiles):
+    """A model that declares no fields gets no view.
+
+    An empty view has nothing to read or write and would surface as an
+    unreferenced root candidate, breaking `_base_path` resolution for
+    everything else in the module.
+    """
+
+    class Empty(BaseModel):
+        pass
+
+    class Real(BaseModel):
+        x: int = 0
+
+    source = generate_views(make_module("demo", Empty, Real))
+    assert_compiles(source)
+
+    assert "class EmptyView" not in source
+    assert "class RealView(InputView):" in source
+
+
 def test_parent_only_base_class_is_dropped(make_module, assert_compiles):
     """A `BaseModel` subclass used only as a base for other module classes
     gets no view of its own.
