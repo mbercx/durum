@@ -90,6 +90,7 @@ show_missing = true
 fail_under = 50
 
 [tool.ruff]
+exclude = ["tests/codegen/test_views_pep695.py"]
 lint.ignore = [
     "TRY003",  # https://docs.astral.sh/ruff/rules/raise-vanilla-args/
     "EM101",   # https://docs.astral.sh/ruff/rules/raw-string-in-exception/

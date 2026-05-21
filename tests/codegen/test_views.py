@@ -14,20 +14,6 @@ from pydantic import BaseModel, Field
 from dough.codegen import generate_views
 
 
-def make_module(name: str, *models: type[BaseModel]) -> types.ModuleType:
-    """Build a fake module so each model's `__module__` matches `name`."""
-    module = types.ModuleType(name)
-    for model in models:
-        model.__module__ = name
-        setattr(module, model.__name__, model)
-    return module
-
-
-def assert_compiles(source: str) -> None:
-    """Verify the generated source is syntactically valid Python."""
-    compile(source, "<generated>", "exec")
-
-
 @pytest.mark.parametrize(
     "annotation, expected",
     [
@@ -41,7 +27,7 @@ def assert_compiles(source: str) -> None:
         (typing.Literal["scf", "relax", "md"], "x: Literal['scf', 'relax', 'md']"),
     ],
 )
-def test_annotation_shapes(annotation, expected):
+def test_annotation_shapes(annotation, expected, make_module, assert_compiles):
     """Cross-shape regression net for the renderer (builtins, unions, generics, `Literal`, `Optional`)."""
     cfg = type(
         "Cfg",
@@ -54,7 +40,7 @@ def test_annotation_shapes(annotation, expected):
     assert expected in source
 
 
-def test_user_type_is_imported():
+def test_user_type_is_imported(make_module, assert_compiles):
     """Non-builtin field types get added to `user_types` and emitted as `from <module> import ...`."""
 
     class Color:
@@ -75,7 +61,7 @@ def test_user_type_is_imported():
     assert "color: Color" in source
 
 
-def test_field_description_becomes_attribute_docstring():
+def test_field_description_becomes_attribute_docstring(make_module, assert_compiles):
     """`Field(description=...)` → attribute docstring on the next line; missing description → none."""
 
     class Calc(BaseModel):
@@ -89,7 +75,7 @@ def test_field_description_becomes_attribute_docstring():
     assert '"""' not in source.split("spin: bool", 1)[1].split("\n", 2)[1]
 
 
-def test_field_default_is_not_emitted():
+def test_field_default_is_not_emitted(make_module, assert_compiles):
     """Defaults belong on the schema (`BaseModel`), not on the view — view is a typed accessor over `_data`."""
 
     class Calc(BaseModel):
@@ -105,7 +91,7 @@ def test_field_default_is_not_emitted():
     assert "count: int" in source
 
 
-def test_header_contains_required_imports():
+def test_header_contains_required_imports(make_module):
     """Generated docstring + the three unconditional imports are always present."""
 
     class Cfg(BaseModel):
@@ -119,7 +105,7 @@ def test_header_contains_required_imports():
     assert "from dough.inputs import InputView" in source
 
 
-def test_empty_module():
+def test_empty_module(make_module, assert_compiles):
     """Module with no `BaseModel`s → valid empty output, no crash."""
     source = generate_views(make_module("demo"))
     assert_compiles(source)
@@ -128,7 +114,7 @@ def test_empty_module():
     assert "from dough.inputs import InputView" in source
 
 
-def test_imported_basemodel_is_skipped():
+def test_imported_basemodel_is_skipped(assert_compiles):
     """Only `BaseModel`s defined in the target module get views; re-exported ones are skipped."""
 
     class Defined(BaseModel):
@@ -151,7 +137,7 @@ def test_imported_basemodel_is_skipped():
     assert "class ImportedView(InputView):" not in source
 
 
-def test_single_root_nested_tree():
+def test_single_root_nested_tree(make_module, assert_compiles):
     """Schema tree with one root → each model gets the correct dotted `_base_path`."""
 
     class Leaf(BaseModel):
@@ -178,7 +164,7 @@ def test_single_root_nested_tree():
     assert "value: int" in source
 
 
-def test_ambiguous_root_leaves_paths_empty():
+def test_ambiguous_root_leaves_paths_empty(make_module, assert_compiles):
     """Two unrelated top-level models → no single root, so no `_base_path` is emitted."""
 
     class A(BaseModel):
@@ -193,7 +179,7 @@ def test_ambiguous_root_leaves_paths_empty():
     assert "_base_path" not in source
 
 
-def test_mutual_reference_falls_back_to_empty_paths():
+def test_mutual_reference_falls_back_to_empty_paths(make_module, assert_compiles):
     """Mutual reference → both models in `referenced`, no single root, fallback to empty paths."""
 
     class A(BaseModel):
@@ -214,7 +200,7 @@ def test_mutual_reference_falls_back_to_empty_paths():
     assert "a: AView" in source
 
 
-def test_self_reference_raises():
+def test_self_reference_raises(make_module):
     """Self-referential input schema → `TypeError` (recursive inputs make no sense)."""
 
     class Node(BaseModel):
@@ -229,7 +215,7 @@ def test_self_reference_raises():
         generate_views(make_module("demo", Node))
 
 
-def test_generated_module_is_executable():
+def test_generated_module_is_executable(make_module):
     """End-to-end: generate, `exec()` against real `InputView`, check classes + `_base_path` survive."""
 
     class Leaf(BaseModel):

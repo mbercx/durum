@@ -17,6 +17,7 @@ or multiple candidates), `_base_path` is left empty and the user's
 
 from __future__ import annotations
 
+import sys
 import types
 import typing
 
@@ -93,6 +94,9 @@ def generate_views(module: types.ModuleType) -> str:
         """Render a runtime annotation back to source, adding non-builtin types to `user_types`."""
         if annotation is type(None):
             return "None"
+
+        if sys.version_info >= (3, 12) and isinstance(annotation, typing.TypeAliasType):
+            return render_annotation(annotation.__value__)
 
         if isinstance(annotation, type):
             if annotation.__module__ == "builtins":
