@@ -269,6 +269,40 @@ def test_list_element_model_gets_no_view(make_module, assert_compiles):
     assert "from demo import Row" in source
 
 
+def test_multi_member_union_assigns_base_path_to_all_variants(
+    make_module, assert_compiles
+):
+    """A discriminated union of submodels at one field assigns `_base_path`
+    to every variant.
+
+    A field annotated `A | B | C` accepts any of the three; all three need
+    to know the same dotted path in `_data` so the user can mount whichever
+    variant matches their schema instance. The renderer should also fall
+    back from a sub-view reference (which can only point at one class) to
+    rendering the raw union.
+    """
+
+    class A(BaseModel):
+        a: int = 0
+
+    class B(BaseModel):
+        b: int = 0
+
+    class C(BaseModel):
+        c: int = 0
+
+    class Root(BaseModel):
+        choice: A | B | C = Field(default_factory=A)
+
+    source = generate_views(make_module("demo", A, B, C, Root))
+    assert_compiles(source)
+
+    assert 'class AView(InputView):\n    _base_path = "choice"' in source
+    assert 'class BView(InputView):\n    _base_path = "choice"' in source
+    assert 'class CView(InputView):\n    _base_path = "choice"' in source
+    assert "choice: A | B | C" in source
+
+
 def test_optional_submodel_is_not_treated_as_container(make_module, assert_compiles):
     """A `Foo | None` field must still get a sub-view, not be dropped as a container element.
 
