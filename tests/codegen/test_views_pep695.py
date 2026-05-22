@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from dough.codegen import generate_views
 
 
-def test_pep_695_type_alias_is_unwrapped(make_module, assert_compiles):
+def test_pep_695_type_alias_is_unwrapped(assert_compiles):
     """A PEP 695 `type X = T` alias is rendered as the underlying `T`.
 
     PEP 695 aliases are `TypeAliasType` instances, not classes;
@@ -24,14 +24,14 @@ def test_pep_695_type_alias_is_unwrapped(make_module, assert_compiles):
     class Cfg(BaseModel):
         w: Width = 0
 
-    source = generate_views(make_module("demo", Cfg))
+    source = generate_views(Cfg)
     assert_compiles(source)
 
     assert "w: int" in source
     assert "Width" not in source
 
 
-def test_pep_695_alias_over_annotated_is_unwrapped(make_module, assert_compiles):
+def test_pep_695_alias_over_annotated_is_unwrapped(assert_compiles):
     """A PEP 695 alias wrapping `Annotated[T, Field(...)]` collapses to `T`.
 
     Pydantic strips `Annotated` metadata from `field.annotation` on direct
@@ -44,7 +44,7 @@ def test_pep_695_alias_over_annotated_is_unwrapped(make_module, assert_compiles)
     class Cfg(BaseModel):
         n: PositiveInt = 1
 
-    source = generate_views(make_module("demo", Cfg))
+    source = generate_views(Cfg)
     assert_compiles(source)
 
     assert "n: int" in source

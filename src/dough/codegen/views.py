@@ -1,18 +1,24 @@
-"""Generate `InputView` subclasses from a module of pydantic models.
+"""Generate `InputView` subclasses from a pydantic root model.
 
-For each `BaseModel` defined in the target module, emit an `InputView`
-subclass with one field per `model_field`:
+Walks `root.model_fields` recursively. For every `(model, dotted_path)`
+pair reached, emit an `InputView` subclass with one field per
+`model_field`:
 
-- Sub-model fields → typed sub-view (`field_name: <SubModelName>View`),
+- Sub-model fields → typed sub-view (`field_name: <SubViewName>`),
   composing nested namespaces.
 - Leaf fields → bare annotations; at runtime `InputView` falls back
   to a `PathAdapter` keyed on the dotted path it sees at construction.
 
 Each view declares its position in `_data` via a `_base_path` class
-attribute, derived from a walk of the schema tree starting at the
-model that nothing else references. If the root is ambiguous (zero
-or multiple candidates), `_base_path` is left empty and the user's
-`BaseInput` subclass picks the anchor by mount point.
+attribute set to its dotted path under the root.
+
+View names default to a PascalCase of the path
+(`KPointsView` for path `"k_points"`). When a single name collides
+across the emitted set — e.g. each member of a discriminated union
+at the same mount — the colliding entries fall back to including
+the class name, with any common prefix between the path-pascal and
+the class name collapsed so the result reads as
+`KPointsListCardView` rather than `KPointsKPointsListCardView`.
 """
 
 from __future__ import annotations
@@ -20,67 +26,13 @@ from __future__ import annotations
 import sys
 import types
 import typing
+from collections import defaultdict
 
 from pydantic import BaseModel
 
 
-def generate_views(module: types.ModuleType) -> str:
-    """Render a `views.py` source string for every BaseModel in `module`."""
-    candidates: list[type[BaseModel]] = []
-    seen: set[int] = set()
-    for value in vars(module).values():
-        if (
-            isinstance(value, type)
-            and issubclass(value, BaseModel)
-            and value is not BaseModel
-            and value.__module__ == module.__name__
-            and id(value) not in seen
-        ):
-            candidates.append(value)
-            seen.add(id(value))
-
-    # Drop any candidate that exists only as a base class for another candidate.
-    # These contribute no fields of their own and would otherwise show up as
-    # unreferenced root candidates that derail `_base_path` resolution.
-    parents: set[type[BaseModel]] = set()
-    for cls in candidates:
-        for base in cls.__mro__[1:]:
-            if base in candidates:
-                parents.add(base)
-
-    # Drop candidates that only appear as the element type of a container field
-    # (`list[X]`, `tuple[X, ...]`, etc.) and any of their subclasses. Container
-    # elements are dynamic — they have no static path to anchor a view on, so
-    # they live as raw dicts in `_data`; pydantic validates them at write time.
-    container_elements: set[type[BaseModel]] = set()
-
-    for cls in candidates:
-        for field in cls.model_fields.values():
-            origin = typing.get_origin(field.annotation)
-
-            if origin in (types.UnionType, typing.Union, None):
-                continue
-
-            for arg in typing.get_args(field.annotation):
-                if isinstance(arg, type) and issubclass(arg, BaseModel):
-                    container_elements.add(arg)
-
-    container_subclasses: set[type[BaseModel]] = set(container_elements)
-
-    for cls in candidates:
-        if any(issubclass(cls, parent) for parent in container_elements):
-            container_subclasses.add(cls)
-
-    # Drop candidates that declare no fields of their own. An empty view has
-    # nothing to read or write, and it would surface as an unreferenced root
-    # candidate that derails `_base_path` resolution for everything else.
-    field_less = {cls for cls in candidates if not cls.model_fields}
-
-    models = [
-        m
-        for m in candidates
-        if m not in parents and m not in container_subclasses and m not in field_less
-    ]
+def generate_views(root: type[BaseModel]) -> str:
+    """Render a `views.py` source string for every BaseModel reachable from `root`."""
 
     def submodels_of(annotation: typing.Any) -> list[type[BaseModel]]:
         """All BaseModel subclasses reachable through a direct or union annotation.
@@ -102,48 +54,74 @@ def generate_views(module: types.ModuleType) -> str:
 
         return []
 
-    # Resolve each model's absolute dotted path. The root is the model
-    # no other references via a field; if ambiguous, every model gets
-    # an empty path and the user mounts views manually.
-    referenced: set[type[BaseModel]] = set()
-    for model in models:
-        for field in model.model_fields.values():
+    # 1. Walk the schema tree from the root, returning one (model, path) pair
+    #    per node reached. Pairs are emitted in walk order so the rendered
+    #    file follows schema declaration order from the user's perspective.
+    def walk(
+        model: type[BaseModel], path: str, seen: set[type[BaseModel]]
+    ) -> list[tuple[type[BaseModel], str]]:
+        if model in seen:
+            raise TypeError(
+                f"cyclic schemas are not supported: {model.__name__} is "
+                "reachable from itself. `_base_path` is a static dotted "
+                "string, so a model with infinite reachable paths cannot "
+                "anchor a view."
+            )
+
+        seen = seen | {model}
+        pairs: list[tuple[type[BaseModel], str]] = [(model, path)]
+
+        for field_name, field in model.model_fields.items():
+            sub_path = f"{path}.{field_name}" if path else field_name
             for sub in submodels_of(field.annotation):
-                if sub in models and sub is not model:
-                    referenced.add(sub)
+                pairs.extend(walk(sub, sub_path, seen))
 
-    roots = [m for m in models if m not in referenced]
-    paths: dict[type[BaseModel], str] = {m: "" for m in models}
+        return pairs
 
-    if len(roots) == 1:
+    pairs = walk(root, "", set())
 
-        def walk(
-            model: type[BaseModel], prefix: str, seen: set[type[BaseModel]]
-        ) -> None:
-            """Recurse through sub-models, assigning each its dotted path under `prefix`."""
-            if model in seen:
-                raise TypeError(
-                    f"cyclic schema: {model.__name__} is reachable from itself"
+    # 2. Derive a view name per (model, path) pair. Default is a PascalCase
+    #    of the path. Names that collide across pairs fall back to including
+    #    the class name, with the longest common prefix between path-pascal
+    #    and class name stripped so common cases stay readable.
+    def pascal_segment(segment: str) -> str:
+        """Convert a single `snake_case` segment to `PascalCase`."""
+        return "".join(p.capitalize() for p in segment.split("_") if p)
+
+    def pascal_path(path: str) -> str:
+        return "".join(pascal_segment(seg) for seg in path.split("."))
+
+    def collision_name(path_pascal: str, class_name: str) -> str:
+        """`<PathPascal><ClassName>View` with the longest shared prefix collapsed."""
+        for k in range(len(class_name), 0, -1):
+            if path_pascal.endswith(class_name[:k]):
+                return f"{path_pascal}{class_name[k:]}View"
+
+        return f"{path_pascal}{class_name}View"
+
+    default_names = {
+        (model, path): f"{pascal_path(path)}View" for model, path in pairs if path
+    }
+    pairs_by_name: dict[str, list[tuple[type[BaseModel], str]]] = defaultdict(list)
+
+    for pair, name in default_names.items():
+        pairs_by_name[name].append(pair)
+
+    view_names: dict[tuple[type[BaseModel], str], str] = {
+        (root, ""): f"{root.__name__}View"
+    }
+    for name, occupants in pairs_by_name.items():
+        if len(occupants) == 1:
+            view_names[occupants[0]] = name
+        else:
+            for model, path in occupants:
+                view_names[(model, path)] = collision_name(
+                    pascal_path(path) if path else "", model.__name__
                 )
 
-            seen = seen | {model}
-            paths[model] = prefix
-
-            for field_name, field in model.model_fields.items():
-                sub_path = f"{prefix}.{field_name}" if prefix else field_name
-                for sub in submodels_of(field.annotation):
-                    if sub not in paths:
-                        continue
-                    walk(sub, sub_path, seen)
-
-        walk(roots[0], "", set())
-
-    # Render one `class <ModelName>View(InputView)` block per model.
-    # Sub-model fields become typed sub-view references; leaf fields
-    # are bare annotations (resolved at runtime via PathAdapter). Field
-    # descriptions become attribute docstrings on the next line, and
-    # any non-builtin types encountered are collected into `user_types`
-    # for the import block, grouped by source module.
+    # 3. Render one `class <Name>View(InputView):` block per emitted pair.
+    #    Sub-model fields become typed sub-view references resolved by
+    #    (sub_model, sub_path); leaf fields are bare annotations.
     user_types: set[type] = set()
     class_blocks: list[str] = []
 
@@ -197,23 +175,31 @@ def generate_views(module: types.ModuleType) -> str:
             f"render_annotation: unsupported annotation {annotation!r}"
         )
 
-    for model in models:
-        lines = [f"class {model.__name__}View(InputView):"]
+    for model, path in pairs:
+        name = view_names[(model, path)]
+        lines = [f"class {name}(InputView):"]
 
-        if paths[model]:
-            lines.append(f'    _base_path = "{paths[model]}"')
+        if model is not root:
+            lines.append(f'    _base_path = "{path}"')
             lines.append("")
 
         for field_name, field in model.model_fields.items():
-            ann = field.annotation
-            subs = [s for s in submodels_of(ann) if s in models]
-            if len(subs) == 1:
-                annotation = f"{subs[0].__name__}View"
+            sub_path = f"{path}.{field_name}" if path else field_name
+            sub_models = submodels_of(field.annotation)
+
+            if len(sub_models) == 1:
+                annotation = view_names[(sub_models[0], sub_path)]
+
+            elif len(sub_models) > 1:
+                annotation = " | ".join(view_names[(s, sub_path)] for s in sub_models)
             else:
-                annotation = render_annotation(ann)
+                annotation = render_annotation(field.annotation)
+
             lines.append(f"    {field_name}: {annotation}")
+
             if field.description is not None:
                 lines.append(f'    """{field.description}"""')
+
             lines.append("")
 
         while lines and lines[-1] == "":
@@ -222,7 +208,7 @@ def generate_views(module: types.ModuleType) -> str:
         class_blocks.append("\n".join(lines))
 
     docstring = (
-        f'"""Generated by `dough generate-views` from `{module.__name__}`.\n\n'
+        f'"""Generated by `dough generate-views` from `{root.__module__}.{root.__name__}`.\n\n'
         "Do not edit by hand — re-run the codegen instead.\n"
         '"""'
     )
