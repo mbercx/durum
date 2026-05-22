@@ -82,12 +82,25 @@ def generate_views(module: types.ModuleType) -> str:
         if m not in parents and m not in container_subclasses and m not in field_less
     ]
 
-    def submodel_of(annotation: typing.Any) -> type[BaseModel] | None:
-        """Pick the BaseModel subclass out of an annotation (direct or in a union)."""
-        for sub_annot in (annotation, *typing.get_args(annotation)):
-            if isinstance(sub_annot, type) and issubclass(sub_annot, BaseModel):
-                return sub_annot
-        return None
+    def submodels_of(annotation: typing.Any) -> list[type[BaseModel]]:
+        """All BaseModel subclasses reachable through a direct or union annotation.
+
+        Returns every submodel when the field's value *is* one of them
+        (direct, or any union member). Container annotations like
+        `list[Foo]` are handled separately and return an empty list here.
+        """
+        if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+            return [annotation]
+
+        origin = typing.get_origin(annotation)
+        if origin in (types.UnionType, typing.Union):
+            return [
+                arg
+                for arg in typing.get_args(annotation)
+                if isinstance(arg, type) and issubclass(arg, BaseModel)
+            ]
+
+        return []
 
     # Resolve each model's absolute dotted path. The root is the model
     # no other references via a field; if ambiguous, every model gets
@@ -95,9 +108,9 @@ def generate_views(module: types.ModuleType) -> str:
     referenced: set[type[BaseModel]] = set()
     for model in models:
         for field in model.model_fields.values():
-            sub = submodel_of(field.annotation)
-            if sub is not None and sub in models and sub is not model:
-                referenced.add(sub)
+            for sub in submodels_of(field.annotation):
+                if sub in models and sub is not model:
+                    referenced.add(sub)
 
     roots = [m for m in models if m not in referenced]
     paths: dict[type[BaseModel], str] = {m: "" for m in models}
@@ -117,12 +130,11 @@ def generate_views(module: types.ModuleType) -> str:
             paths[model] = prefix
 
             for field_name, field in model.model_fields.items():
-                sub = submodel_of(field.annotation)
-
-                if sub is None or sub not in paths:
-                    continue
-
-                walk(sub, f"{prefix}.{field_name}" if prefix else field_name, seen)
+                sub_path = f"{prefix}.{field_name}" if prefix else field_name
+                for sub in submodels_of(field.annotation):
+                    if sub not in paths:
+                        continue
+                    walk(sub, sub_path, seen)
 
         walk(roots[0], "", set())
 
@@ -193,11 +205,12 @@ def generate_views(module: types.ModuleType) -> str:
             lines.append("")
 
         for field_name, field in model.model_fields.items():
-            sub = submodel_of(field.annotation)
-            if sub is not None and sub in models:
-                annotation = f"{sub.__name__}View"
+            ann = field.annotation
+            subs = [s for s in submodels_of(ann) if s in models]
+            if len(subs) == 1:
+                annotation = f"{subs[0].__name__}View"
             else:
-                annotation = render_annotation(field.annotation)
+                annotation = render_annotation(ann)
             lines.append(f"    {field_name}: {annotation}")
             if field.description is not None:
                 lines.append(f'    """{field.description}"""')
