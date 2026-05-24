@@ -1,0 +1,1163 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../inputs/">
+      
+      
+        <link rel="next" href="../units/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Inputs-Ar - dough</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#inputs-architecture" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="dough" class="md-header__button md-logo" aria-label="dough" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            dough
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Inputs-Ar
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="dough" class="md-nav__button md-logo" aria-label="dough" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    dough
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../outputs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Outputs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../inputs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inputs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inputs-Ar
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inputs-Ar
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#assigning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assigning
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Assigning">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-state-one-source-of-truth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One state, one source of truth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-namespace-per-mapping-one-mapping-per-typed-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One namespace per mapping, one mapping per typed API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-level-nesting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two-level nesting
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#declaring-a-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Declaring a mapping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adapters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adapters
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adapters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lossy-reads-warn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lossy reads warn
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#library-isolation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Library isolation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Validation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#field-existence-check-is-independent-of-value-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field-existence check is independent of value validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#removing-inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removing inputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#writing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parsing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-checker-visibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type-checker visibility
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multiple-codes-in-one-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiple codes in one package
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../units/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Units
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#assigning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assigning
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Assigning">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-state-one-source-of-truth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One state, one source of truth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-namespace-per-mapping-one-mapping-per-typed-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One namespace per mapping, one mapping per typed API
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#two-level-nesting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two-level nesting
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#declaring-a-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Declaring a mapping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adapters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adapters
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adapters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lossy-reads-warn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lossy reads warn
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#library-isolation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Library isolation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Validation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#field-existence-check-is-independent-of-value-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Field-existence check is independent of value validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#removing-inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removing inputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#writing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parsing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parsing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#type-checker-visibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type-checker visibility
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multiple-codes-in-one-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiple codes in one package
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="inputs-architecture">Inputs — architecture</h1>
+<p><code>dough</code> provides the generic machinery for declaring, validating, and writing the inputs of a simulation code as typed Python objects.
+Code-specific packages (e.g. <code>qe-tools</code> for Quantum ESPRESSO) build on this machinery to ship the actual input classes, mappings, adapters, and parsers for their target code.</p>
+<div class="admonition note">
+<p class="admonition-title">Companion to the UX doc</p>
+<p>This page describes the <strong>architecture</strong> behind the input layer.
+For the user-facing API and intended UX, see <a href="../inputs/">Inputs</a>.</p>
+</div>
+<p>Throughout, we use a hypothetical code with input class <code>MyInput</code> as a running example.</p>
+<h2 id="assigning">Assigning</h2>
+<pre class="mermaid"><code>flowchart TD
+    USER[user assignment\ninp.inputs.system.ecutwfc = 60] --&gt; NS[Namespace]
+    NS --&gt; ADAPT[Adapter or RawPath]
+    ADAPT --&gt; RAW[raw_inputs dict]
+    SCHEMA[InputsMapping declaration] -.shapes.-&gt; NS
+    OWNER[MyInput instance] -.holds.-&gt; RAW
+    NS -.back-ref.-&gt; OWNER</code></pre>
+<p>The diagram shows the four key pieces:</p>
+<ul>
+<li><code>raw_inputs</code> — a plain nested dict, the <strong>single source of state</strong>, owned by the <code>MyInput</code> instance.</li>
+<li><strong><code>InputsMapping</code></strong> — a class-level <em>declaration</em> of the typed surface (field names, types, adapters). Never instantiated directly.</li>
+<li><strong><code>Namespace</code></strong> — runtime proxy presenting the typed surface and routing assignment through to <code>raw_inputs</code> via the adapters declared on the mapping. One class instantiated at two depths (top level for <code>inp.inputs</code>, nested for <code>inp.inputs.system</code>); depth controlled by a <code>path</code> parameter.</li>
+<li><strong><code>Adapter</code></strong> — converts user values to/from the raw form. Trivial fields use an <em>implicit</em> <code>RawPath</code> adapter (the field name becomes the dot-path); complex fields (e.g. <code>structure</code>) hand-write their own <code>Adapter</code> subclass.</li>
+</ul>
+<h3 id="one-state-one-source-of-truth">One state, one source of truth</h3>
+<p>The mapping façade does <strong>not store anything</strong> of its own.
+Every write path — attribute assignment (<code>inp.inputs.system.ecutwfc = 60</code>), <code>set_input</code>, <code>merge_inputs</code>, <code>from_dir</code>, <code>from_files</code> — runs through an adapter and assigns into <code>raw_inputs</code>.
+Reading returns a value derived from <code>raw_inputs</code>; for adapter-backed fields this means re-deriving (e.g. reconstructing an <code>ase.Atoms</code> from the parsed cards).</p>
+<p>This collapses three otherwise-tricky concerns into one:</p>
+<ul>
+<li><strong>No syncing</strong>: there is no second copy of the data on the mapping that could drift.</li>
+<li><strong>No "what was set" ambiguity</strong>: <code>raw_inputs</code> is the only thing that exists; what's in it is what gets written.</li>
+<li><strong>No persistence of user object identity</strong>: assigning <code>inp.inputs.structure = atoms</code> converts and discards the reference; mutating <code>atoms</code> later has no effect on the input.</li>
+</ul>
+<h3 id="one-namespace-per-mapping-one-mapping-per-typed-api">One namespace per mapping, one mapping per typed API</h3>
+<p>A <code>Namespace</code> is a typed mapping (<code>InputsMapping</code>) attached to the input class as an attribute.
+The default namespace is <code>inputs</code> (the code-native API).
+Code-package developers can attach further namespaces — <code>common</code> for code-agnostic vocab, <code>protocols</code> for opinionated presets, ... — each with its own field set and adapters, all writing into the same <code>raw_inputs</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="n">inp</span> <span class="o">=</span> <span class="n">PwInput</span><span class="p">()</span>
+<span class="n">inp</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">ecutwfc</span> <span class="o">=</span> <span class="mi">60</span>         <span class="c1"># qe-native API</span>
+<span class="n">inp</span><span class="o">.</span><span class="n">common</span><span class="o">.</span><span class="n">relax_type</span> <span class="o">=</span> <span class="s2">&quot;cell+atoms&quot;</span>   <span class="c1"># common-workflow API, same raw_inputs</span>
+<span class="n">inp</span><span class="o">.</span><span class="n">to_dir</span><span class="p">(</span><span class="s2">&quot;calc/&quot;</span><span class="p">)</span>                    <span class="c1"># writes the calculation directory</span>
+</code></pre></div>
+<p>Last-write-wins on raw fields; namespaces do not coordinate.</p>
+<h3 id="two-level-nesting">Two-level nesting</h3>
+<p>Nesting is capped at two levels: <code>inp.&lt;namespace&gt;.&lt;group&gt;.&lt;field&gt;</code>.
+Cards with internal structure (Hubbard parameters, constraints, ...) are exposed as <strong>lists of objects at level two</strong>, not as a third namespace.
+This keeps the mental model and the implementation small: a single <code>Namespace</code> class, instantiated at depth 0 (top level) or depth 1 (sub-mapping). No recursion beyond that.</p>
+<h2 id="declaring-a-mapping">Declaring a mapping</h2>
+<p>Each input mapping is declared as a class decorated with <code>@input_mapping</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@input_mapping</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_SystemMapping</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The &amp;SYSTEM namelist.&quot;&quot;&quot;</span>
+
+    <span class="n">ecutwfc</span><span class="p">:</span> <span class="nb">float</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Kinetic-energy cutoff for wavefunctions.&quot;&quot;&quot;</span>
+
+    <span class="n">ecutrho</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Kinetic-energy cutoff for charge density.&quot;&quot;&quot;</span>
+
+
+<span class="nd">@input_mapping</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_MyInputsMapping</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The default `inputs` namespace for MyInput.&quot;&quot;&quot;</span>
+
+    <span class="n">structure</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Structure</span><span class="p">,</span> <span class="n">StructureAdapter</span><span class="p">()]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Crystal structure. Accepts ASE / pymatgen / AiiDA / ...&quot;&quot;&quot;</span>
+
+    <span class="n">system</span><span class="p">:</span> <span class="n">_SystemMapping</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The &amp;SYSTEM namelist.&quot;&quot;&quot;</span>
+</code></pre></div>
+<p>Two kinds of fields:</p>
+<ul>
+<li><strong>Adapter-backed leaves</strong> — <code>Annotated[T, Adapter()]</code>. The adapter handles assignment and reading.</li>
+<li><strong>Sub-namespace fields</strong> — bare annotation whose type is another <code>@input_mapping</code> class. The decorator injects a <code>SubMapping(...)</code> default; <code>BaseInput</code> resolves it into a nested <code>Namespace</code> (at depth 1) at construction.</li>
+</ul>
+<p>Fields without an adapter or sub-mapping annotation are a declaration error.</p>
+<p>The mapping class is connected to the input class via the generic typing syntax:</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MyInput</span><span class="p">(</span><span class="n">BaseInput</span><span class="p">[</span><span class="n">_MyInputsMapping</span><span class="p">]):</span>
+    <span class="o">...</span>
+</code></pre></div>
+<p><code>BaseInput</code> extracts the mapping class from this generic parameter at instantiation, walks its fields, and builds the <code>Namespace</code> proxies bound to <code>self</code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code>Annotated[T, Adapter(...)]</code> shape is the input analog of the output side's <code>Annotated[T, Spec(...)]</code>.
+Outputs use a one-way <code>Spec</code> (extract from <code>raw_outputs</code>), inputs use a two-way <code>Adapter</code> (assign + read).
+Future per-field metadata (e.g. a <code>Unit("eV")</code> marker mirroring the output side) slots in alongside <code>Adapter</code> in the same <code>Annotated</code> list.</p>
+</div>
+<h2 id="adapters">Adapters</h2>
+<pre class="mermaid"><code>flowchart TD
+    USER_VAL[user value\nase.Atoms / dict / ...] --&gt; ADAPT[Adapter]
+    ADAPT -- to_raw --&gt; RAW[raw_inputs paths]
+    RAW -- from_raw --&gt; ADAPT
+    ADAPT --&gt; RECON[reconstructed value\nfor read]
+    LIB_HOOK[lib-specific module\nase.py / pymatgen.py / ...] -.lazy import.-&gt; ADAPT</code></pre>
+<p>An <code>Adapter</code> is a small object with two methods. Paths are dot-strings, glom-style (parity with the output <code>Spec</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Adapter</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span> <span class="o">...</span>   <span class="c1"># {&quot;system.ecutwfc&quot;: 60}</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span> <span class="o">...</span>
+</code></pre></div>
+<p><code>to_raw</code> returns a flat mapping from dot-path to value; <code>BaseInput</code> writes each into <code>raw_inputs</code> via <code>glom</code>.
+<code>from_raw</code> reads what it needs from <code>raw_inputs</code> and reconstructs a Python value for the user.</p>
+<div class="admonition note">
+<p class="admonition-title">Spec + Assign as primitives</p>
+<p>The two adapter directions correspond directly to the two glom primitives:</p>
+<ul>
+<li><strong>raw → typed (read)</strong> = <code>glom.Spec(path)</code> — the same primitive the output side uses.</li>
+<li><strong>typed → raw (write)</strong> = <code>glom.Assign(path, value, missing=dict)</code> — the inverse, auto-creating missing intermediate dicts.</li>
+</ul>
+<p>For trivial 1:1 fields the implicit <code>RawPath</code> adapter is exactly this <code>(Spec, Assign)</code> pair.
+Hand-written adapters use <code>Assign</code> as a building block when their writer happens to be a single-path assignment, and fall back to multi-path / custom logic for one-to-many cases (e.g. a structure expanding into <code>&amp;SYSTEM</code> flags + <code>ATOMIC_POSITIONS</code> + <code>ATOMIC_SPECIES</code>).
+Symmetry breaks for non-identity transforms (unit conversions need an inverse) and for deletion (<code>Assign</code> writes <code>None</code>; clearing requires popping from the dict).</p>
+</div>
+<p>For trivial 1:1 fields (most QE namelist flags), dough provides <code>RawPath</code> — but it is <strong>rarely written explicitly</strong>.
+A bare typed field with no <code>Annotated</code> adapter gets an implicit <code>RawPath</code> whose dot-path is the field name joined to the enclosing sub-mapping's name:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@input_mapping</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_SystemMapping</span><span class="p">:</span>
+    <span class="n">ecutwfc</span><span class="p">:</span> <span class="nb">float</span>                                          <span class="c1"># implicit RawPath(&quot;system.ecutwfc&quot;)</span>
+    <span class="n">my_alias</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">RawPath</span><span class="p">(</span><span class="s2">&quot;system.foo&quot;</span><span class="p">)]</span>       <span class="c1"># explicit override</span>
+</code></pre></div>
+<p>A future extension may add an optional <code>(forward, inverse)</code> transform pair on <code>RawPath</code> for unit conversions.</p>
+<p>For richer fields (<code>structure</code>, <code>kpoints</code>, <code>pseudos</code>, ...), the package author hand-writes an <code>Adapter</code> subclass.
+Adapters that accept multiple Python types (e.g. <code>structure</code> accepts ASE / pymatgen / AiiDA) <strong>must isolate library-specific code in lazy-imported modules</strong> — see "Library isolation" below.</p>
+<h3 id="lossy-reads-warn">Lossy reads warn</h3>
+<p>For adapters where the round-trip is lossy (e.g. <code>Atoms → cards → Atoms</code> may drop ASE-only metadata), <code>from_raw</code> should emit a warning the first time loss occurs in a given read.
+This applies symmetrically across namespaces: reading <code>inp.common.relax_type</code> after the user has tweaked <code>inp.inputs.control.calculation</code> may yield a value that is no longer a valid common-workflow option.</p>
+<h3 id="library-isolation">Library isolation</h3>
+<div class="highlight"><pre><span></span><code><span class="n">qe_tools</span><span class="o">/</span><span class="n">inputs</span><span class="o">/</span><span class="n">adapters</span><span class="o">/</span>
+    <span class="fm">__init__</span><span class="o">.</span><span class="n">py</span>
+    <span class="n">structure</span><span class="o">.</span><span class="n">py</span>    <span class="c1"># main StructureAdapter, dispatches by type</span>
+    <span class="n">ase</span><span class="o">.</span><span class="n">py</span>          <span class="c1"># imports ase only; ase ↔ raw routines</span>
+    <span class="n">pymatgen</span><span class="o">.</span><span class="n">py</span>     <span class="c1"># imports pymatgen only</span>
+    <span class="n">aiida</span><span class="o">.</span><span class="n">py</span>        <span class="c1"># imports aiida-core only</span>
+</code></pre></div>
+<p>The main adapter module (<code>structure.py</code>) imports the per-library modules <strong>lazily</strong>, only when the user supplies a value of the corresponding type.
+Result: a user who never installs pymatgen never imports it; a user who does, gets full pymatgen support without further setup.</p>
+<h2 id="validation">Validation</h2>
+<pre class="mermaid"><code>flowchart TD
+    A_USER[user assignment] --&gt; A_NS[Namespace]
+    A_NS --&gt; A_HOOK[validate_field hook]
+    A_HOOK -- valid --&gt; A_RAW[raw_inputs]
+    A_HOOK -- invalid --&gt; A_RAISE[ValidationError]
+
+    W_DIR[to_dir] --&gt; W_HOOK[validate_model hook]
+    W_HOOK -- valid --&gt; W_WRITE[write files]
+    W_HOOK -- invalid --&gt; W_RAISE[ValidationError]</code></pre>
+<p>Two levels of validation, each behind a hook on <code>BaseInput</code>:</p>
+<ul>
+<li><strong><code>validate_field(path, value) -&gt; Any</code></strong> — per-set, runs on every assignment.
+  Default behaviour: identity (no-op).
+  Subclasses (e.g. <code>PwInput</code>) can wire it to a per-field <code>TypeAdapter</code> from a pydantic schema.</li>
+<li><strong><code>validate_model(raw_inputs) -&gt; dict</code></strong> — whole-input, runs at <code>to_dir</code>.
+  Default: identity.
+  Subclasses can wire it to a full pydantic model instantiation that runs cross-field validators.</li>
+</ul>
+<p>Both hooks are no-ops by default, so dough does not require pydantic.
+Code-specific packages decide whether to wire validation in.</p>
+<h3 id="field-existence-check-is-independent-of-value-validation">Field-existence check is independent of value validation</h3>
+<p>The <code>Namespace</code> proxies enforce that a field name is <strong>declared on the mapping</strong> before allowing assignment.
+This is a class-structure check — no validator wired needed — so typos like <code>inp.inputs.system.ecutwf = 60</code> raise immediately even without pydantic.</p>
+<p>Value validation (type, range, allowed values) requires <code>validate_field</code> to be wired.</p>
+<h2 id="removing-inputs">Removing inputs</h2>
+<div class="highlight"><pre><span></span><code><span class="n">inp</span><span class="o">.</span><span class="n">remove_input</span><span class="p">(</span><span class="s2">&quot;system.ecutwfc&quot;</span><span class="p">)</span>
+<span class="k">del</span> <span class="n">inp</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">ecutwfc</span>        <span class="c1"># equivalent</span>
+</code></pre></div>
+<p>Both pop from <code>raw_inputs</code>.
+Because <code>raw_inputs</code> is a plain dict, removal is trivial — no pydantic-internals interaction needed.</p>
+<h2 id="writing">Writing</h2>
+<p><code>to_dir(path)</code> is the canonical write target — input files plus auxiliary files (pseudopotentials, kernel files, ...) the code needs to run.
+Code-specific escape hatches (e.g. a <code>write_input("pw.in")</code> for just the namelist file) may be provided where useful, but <code>to_dir</code> is what the standard interface promises.</p>
+<p>The write step:</p>
+<ol>
+<li>Runs <code>validate_model(raw_inputs)</code>.</li>
+<li>Resolves which fields the user explicitly set (defaults are not serialised).</li>
+<li>Calls a code-specific writer (e.g. <code>PwInputWriter.write(raw_inputs, path)</code>).</li>
+</ol>
+<p>The writer is a stateless class — same shape as parsers on the output side.</p>
+<h2 id="parsing">Parsing</h2>
+<pre class="mermaid"><code>flowchart LR
+    FILE[pw.in] --&gt; PARSER[PwInputParser]
+    PARSER --&gt; PARSED[parsed dict]
+    PARSED -. matches schema .-&gt; RAW[raw_inputs]</code></pre>
+<p>Two entry points, mirroring the output side:</p>
+<div class="highlight"><pre><span></span><code><span class="n">inp</span> <span class="o">=</span> <span class="n">PwInput</span><span class="o">.</span><span class="n">from_dir</span><span class="p">(</span><span class="s2">&quot;calc/&quot;</span><span class="p">)</span>             <span class="c1"># walks directory, finds input files</span>
+<span class="n">inp</span> <span class="o">=</span> <span class="n">PwInput</span><span class="o">.</span><span class="n">from_files</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="s2">&quot;pw.in&quot;</span><span class="p">)</span>     <span class="c1"># explicit per-file paths via kwargs</span>
+</code></pre></div>
+<p><code>from_dir</code> is the canonical entry point — most calculations have multiple input files (e.g. <code>pw.in</code> plus pseudopotentials; for VASP: <code>INCAR</code>, <code>POSCAR</code>, <code>KPOINTS</code>, <code>POTCAR</code>).
+<code>from_files</code> exposes the per-file paths explicitly via kwargs, useful when files live outside a single directory or have non-standard names.</p>
+<p>Each parser is a stateless class with a <code>parse(content: str) -&gt; dict</code> method, mirroring the output-side parser pattern.
+Returned dict matches the <code>raw_inputs</code> schema directly — no further transformation.</p>
+<p>Round-trip is best-effort: the <em>calculation</em> is preserved, but bytes are not.
+Comments, whitespace, and parameter ordering are not retained.
+Unknown fields raise during parsing — the schema is well-defined for the supported QE versions.</p>
+<h2 id="type-checker-visibility">Type-checker visibility</h2>
+<p>For a static type checker (mypy, pyright) to understand <code>inp.inputs.system.ecutwfc: float</code>, the <code>Namespace</code> exposed on the input class must have a real, declared type with real attribute annotations.</p>
+<p>The <code>class MyInput(BaseInput[_MyInputsMapping])</code> syntax is what gives this:</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BaseInput</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">T</span>   <span class="c1"># type-checker sees the mapping class as the type of `inputs`</span>
+</code></pre></div>
+<p>At runtime, <code>inp.inputs</code> is a <code>Namespace</code> instance whose <code>__setattr__</code> / <code>__getattr__</code> route through <code>raw_inputs</code>.
+The type checker does not see the runtime <code>Namespace</code>; it sees the declared mapping class and its annotated fields.
+This is the same trick pydantic uses for model field access.</p>
+<p>For the bulk of QE namelist groups, the typed mapping classes (<code>_SystemMapping</code>, <code>_ControlMapping</code>, ...) are highly regular — one annotated field per QE flag.
+These are well-suited to <strong>codegen</strong> from QE's <code>.def</code> files (the same source <code>pydantic-espresso</code> uses).
+Top-level mappings and adapter-backed fields (<code>structure</code>, ...) remain hand-written.</p>
+<h2 id="multiple-codes-in-one-package">Multiple codes in one package</h2>
+<p>A package supporting multiple binaries (e.g. <code>pw.x</code>, <code>cp.x</code>) ships one input class per binary.
+Each input class has its own <code>InputsMapping</code> declaration, its own writer, and its own parser.
+Adapters that produce the same kind of output (e.g. a <code>StructureAdapter</code>) can be shared across input classes.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
