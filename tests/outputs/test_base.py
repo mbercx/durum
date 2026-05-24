@@ -9,7 +9,7 @@ import yaml
 
 from dough.converters.base import BaseConverter
 from dough import Unit
-from dough.outputs.base import BaseOutput, output_mapping
+from dough.outputs.base import BaseOutput, OutputView, output_mapping
 
 
 # =============================================================================
@@ -539,3 +539,94 @@ def test_get_output_dict_pint_mixed_no_raises(raw_outputs):
 
     assert out["nested"]["d"] == 4
     assert out["nested"]["c"].magnitude == pytest.approx(3)
+
+
+# =============================================================================
+# OutputView (stateless typed accessor) tests
+# =============================================================================
+
+
+class StubOwner:
+    """Minimal `BaseOutput` stand-in: holds `raw_outputs`, nothing else."""
+
+    def __init__(self, raw_outputs):
+        self.raw_outputs = raw_outputs
+
+
+class NestedView(OutputView):
+    c: Annotated[int, Spec("b.c")]
+    d: Annotated[int, Spec("b.d")]
+    missing: Annotated[int, Spec("b.nope")]
+
+
+class DummyView(OutputView):
+    a: Annotated[int, Spec("a")]
+    missing: Annotated[int, Spec("nope")]
+    with_default: Annotated[bool, Spec("nope")] = False
+    nested: NestedView
+
+
+def test_outputview_leaf_resolves(raw_outputs):
+    view = DummyView(StubOwner(raw_outputs))
+    assert view.a == 1
+
+
+def test_outputview_unresolved_leaf_no_default_raises(raw_outputs):
+    view = DummyView(StubOwner(raw_outputs))
+    with pytest.raises(AttributeError, match="not available in the parsed outputs"):
+        view.missing
+
+
+def test_outputview_unresolved_leaf_falls_back_to_class_default(raw_outputs):
+    view = DummyView(StubOwner(raw_outputs))
+    assert view.with_default is False
+
+
+def test_outputview_unknown_name_raises_bare(raw_outputs):
+    view = DummyView(StubOwner(raw_outputs))
+    with pytest.raises(AttributeError) as exc_info:
+        view.does_not_exist
+    # Bare AttributeError (no "not available in parsed outputs" suffix):
+    # required for `hasattr` / `getattr(..., default)` semantics.
+    assert "not available in the parsed outputs" not in str(exc_info.value)
+
+
+def test_outputview_subview_instantiated(raw_outputs):
+    view = DummyView(StubOwner(raw_outputs))
+    assert isinstance(view.nested, NestedView)
+
+
+def test_outputview_subview_leaf_routes_to_owner(raw_outputs):
+    view = DummyView(StubOwner(raw_outputs))
+    assert view.nested.c == 3
+    assert view.nested.d == 4
+
+
+def test_outputview_subview_shares_owner(raw_outputs):
+    owner = StubOwner(raw_outputs)
+    view = DummyView(owner)
+    assert view.nested._owner is owner
+
+
+def test_outputview_subview_unresolved_leaf_raises(raw_outputs):
+    view = DummyView(StubOwner(raw_outputs))
+    with pytest.raises(AttributeError, match="not available in the parsed outputs"):
+        view.nested.missing
+
+
+def test_outputview_dir_lists_declared_fields(raw_outputs):
+    view = DummyView(StubOwner(raw_outputs))
+    names = set(dir(view))
+    # Leaves declared on the view:
+    assert {"a", "missing", "with_default"} <= names
+    # Sub-view name (set as an instance attribute in __init__):
+    assert "nested" in names
+
+
+def test_outputview_error_message_names_view_and_spec(raw_outputs):
+    view = DummyView(StubOwner(raw_outputs))
+    with pytest.raises(AttributeError) as exc_info:
+        view.missing
+    msg = str(exc_info.value)
+    assert "DummyView.missing" in msg
+    assert "Spec" in msg

@@ -19,6 +19,55 @@ T = typing.TypeVar("T")
 TC = typing.TypeVar("TC", bound=type)
 
 
+class OutputView:
+    """Typed namespace over an owner's `raw_outputs` state.
+
+    Subclasses declare annotated fields. Sub-view fields (annotation
+    pointing to another `OutputView` subclass) compose nested
+    namespaces. Leaf fields carry a `glom.Spec` in their `Annotated`
+    metadata that resolves against `_owner.raw_outputs` on read.
+
+    Stateless: the view holds no parsed values, only a back-reference
+    to its owner. `raw_outputs` is the single source of truth.
+    """
+
+    def __init__(self, owner: "BaseOutput[typing.Any]") -> None:
+        sub_fields: dict[str, type[OutputView]] = {}
+        leaves: dict[str, typing.Any] = {}
+
+        for name, hint in typing.get_type_hints(
+            type(self), include_extras=True
+        ).items():
+            if isinstance(hint, type) and issubclass(hint, OutputView):
+                sub_fields[name] = hint
+            else:
+                leaves[name] = hint
+
+        self._owner = owner
+        self._sub_fields = sub_fields
+        self._leaves = leaves
+
+        for name, sub_cls in sub_fields.items():
+            setattr(self, name, sub_cls(owner))
+
+    def __getattr__(self, name: str) -> typing.Any:
+        if name not in self._leaves:
+            raise AttributeError(name)
+
+        spec = _spec_from_annotated(self._leaves[name])
+
+        try:
+            return glom(self._owner.raw_outputs, spec)
+        except GlomError:
+            raise AttributeError(
+                f"'{name}' is not available in the parsed outputs "
+                f"({type(self).__name__}.{name} via Spec {spec!r})."
+            ) from None
+
+    def __dir__(self) -> list[str]:
+        return sorted(set(object.__dir__(self)) | set(self._leaves))
+
+
 _NOT_PARSED = object()
 """Sentinel marking a field whose `Spec` was not resolved against `raw_outputs`.
 
