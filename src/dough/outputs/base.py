@@ -4,19 +4,13 @@ from __future__ import annotations
 
 import abc
 import contextlib
-import dataclasses
 import typing
-from functools import cached_property
 from typing import Annotated
 
 from glom import glom, GlomError, Spec
 
 from dough.converters.base import BaseConverter
 from dough._units import Unit, get_ureg
-
-
-T = typing.TypeVar("T")
-TC = typing.TypeVar("TC", bound=type)
 
 
 class OutputView:
@@ -31,7 +25,7 @@ class OutputView:
     to its owner. `raw_outputs` is the single source of truth.
     """
 
-    def __init__(self, owner: "BaseOutput[typing.Any]") -> None:
+    def __init__(self, owner: "BaseOutput") -> None:
         sub_fields: dict[str, type[OutputView]] = {}
         leaves: dict[str, typing.Any] = {}
 
@@ -68,27 +62,6 @@ class OutputView:
         return sorted(set(object.__dir__(self)) | set(self._leaves))
 
 
-_NOT_PARSED = object()
-"""Sentinel marking a field whose `Spec` was not resolved against `raw_outputs`.
-
-Installed by `@output_mapping` as the dataclass default for every
-`Annotated[T, Spec(...)]` field that does not declare an explicit default.
-`__getattribute__` raises on this sentinel; explicit defaults (e.g. `= False`)
-are left untouched and reachable normally.
-"""
-
-
-class SubMapping:
-    """Sentinel marking a field as a nested output mapping.
-
-    `BaseOutput` resolves these at instantiation time. Nesting is intended to
-    be one level only: a sub-mapping class should only contain `Spec` fields.
-    """
-
-    def __init__(self, mapping_cls: type):
-        self.mapping_cls = mapping_cls
-
-
 def _spec_from_annotated(hint: typing.Any) -> Spec | None:
     """Return the `Spec` embedded in an `Annotated[...]` type hint, or `None`.
 
@@ -121,118 +94,24 @@ def _unit_from_annotated(hint: typing.Any) -> Unit | None:
     return None
 
 
-def output_mapping(cls: TC) -> TC:
-    """Decorator that defines a typed, frozen output mapping for a code.
+def _build_field_mapping(view: OutputView) -> dict[str, typing.Any]:
+    """Walk a view (and its sub-views) into a nested `(spec, unit)` dict.
 
-    Each field on the decorated class becomes one output of the corresponding
-    `BaseOutput` subclass. There are two kinds of fields:
-
-    **Parse-target fields** — a quantity extracted from `raw_outputs` via glom.
-    Declared as `Annotated[T, Spec(...)]`, with a docstring stating units:
-
-        fermi_energy: Annotated[float, Spec("xml.output.band_structure.fermi_energy")]
-        \"""Fermi energy in eV.\"""
-
-    If the `Spec` fails to resolve, accessing the field on the `outputs`
-    namespace raises `AttributeError`. Attach an explicit default to return
-    that value instead when parsing fails:
-
-        job_done: Annotated[bool, Spec("stdout.job_done")] = False
-        \"""Whether the job completed. Defaults to False if not parsed.\"""
-
-    **Sub-namespace fields** — a nested group of outputs. Declared as a bare
-    annotation whose type is another `@output_mapping` class:
-
-        parameters: _ParametersMapping
-        \"""Parameters the calculation ran with.\"""
-
-    Sub-namespace classes must be defined before the parent that references
-    them, and should themselves only contain parse-target fields (one level of
-    nesting).
-
-    The decorator applies `@dataclass(frozen=True)`, so parsed outputs are
-    immutable. `dir()` on a mapping instance lists only the fields that
-    actually resolved, for clean tab completion. `repr()` follows the same
-    rule: unresolved fields are omitted, and sub-mappings that resolved no
-    fields are skipped in the parent repr.
+    Each leaf becomes a `(spec, unit)` 2-tuple; each sub-view becomes a nested
+    dict of the same shape. Matches the structure that `BaseOutput.get_output`
+    and `BaseOutput.list_outputs` consume.
     """
-
-    def __getattribute__(self: typing.Any, name: str) -> typing.Any:
-        value = object.__getattribute__(self, name)
-        if value is _NOT_PARSED or isinstance(value, SubMapping):
-            raise AttributeError(f"'{name}' is not available in the parsed outputs.")
-        return value
-
-    def __dir__(self: typing.Any) -> list[str]:
-        return [
-            name
-            for name, value in self.__dict__.items()
-            if value is not _NOT_PARSED and not isinstance(value, SubMapping)
-        ]
-
-    def __repr__(self: typing.Any) -> str:
-        parts = []
-
-        for field in dataclasses.fields(self):
-            try:
-                # Re-use the `__getattribute__` hook: unresolved fields raise.
-                value = getattr(self, field.name)
-            except AttributeError:
-                continue
-            # Re-use the `__dir__` hook: empty sub-mapping → `dir(value) == []`.
-            if getattr(type(value), "_is_output_mapping", False) and dir(value) == []:
-                continue
-            parts.append(f"{field.name}={repr(value)}")
-
-        return f"{type(self).__name__}({', '.join(parts)})"
-
-    setattr(cls, "__getattribute__", __getattribute__)
-    setattr(cls, "__dir__", __dir__)
-    setattr(cls, "__repr__", __repr__)
-
-    # Inject dataclass defaults so that mapping instances can be constructed
-    # without supplying every field — the `outputs` cached_property only passes
-    # kwargs for fields that resolved, and the rest must come from defaults.
-    #
-    # Parse-target fields (`Annotated[T, Spec(...)]`) without an explicit
-    # fallback get `_NOT_PARSED`, which `__getattribute__` traps to raise a
-    # clear "not available" error. Fields with an explicit fallback are left
-    # alone — the explicit value is returned directly when the Spec fails.
-    #
-    # Sub-namespace fields (bare `_OtherMapping`) get a `SubMapping(hint)`
-    # placeholder; the `outputs` builder always replaces it with an
-    # instantiated sub-mapping, so it never reaches user code.
-    #
-    # Note: `get_type_hints` evaluates annotations; modules that use
-    # `from __future__ import annotations` together with `TYPE_CHECKING`-only
-    # sub-mapping imports would raise `NameError` here. Sub-mapping classes
-    # must be defined *before* the parent that references them.
-    hints = typing.get_type_hints(cls, include_extras=True)
-    for name, hint in hints.items():
-        if hasattr(cls, name):  # already has a default
-            continue
-
+    result: dict[str, typing.Any] = {}
+    for name, hint in view._leaves.items():
         spec = _spec_from_annotated(hint)
-
-        if spec is not None:
-            setattr(cls, name, _NOT_PARSED)
-            continue
-
-        if isinstance(hint, type) and getattr(hint, "_is_output_mapping", False):
-            setattr(cls, name, SubMapping(hint))
-            continue
-
-        raise TypeError(
-            f"{cls.__name__}.{name}: needs an `Annotated[T, Spec(...)]` annotation "
-            f"(optionally with a fallback default), or a bare annotation whose type "
-            f"is an @output_mapping class (which must be defined before this class)"
-        )
-
-    setattr(cls, "_is_output_mapping", True)
-    return dataclasses.dataclass(frozen=True, repr=False)(cls)  # type: ignore[return-value]
+        unit = _unit_from_annotated(hint)
+        result[name] = (spec, unit)
+    for name, sub_view in ((n, getattr(view, n)) for n in view._sub_fields):
+        result[name] = _build_field_mapping(sub_view)
+    return result
 
 
-class BaseOutput(abc.ABC, typing.Generic[T]):
+class BaseOutput(abc.ABC):
     """Abstract base class for code outputs."""
 
     converters: typing.ClassVar[dict[str, type[BaseConverter]]] = {}
@@ -247,56 +126,23 @@ class BaseOutput(abc.ABC, typing.Generic[T]):
     in at import time.
     """
 
-    @classmethod
-    def _get_mapping_class(cls) -> type:
-        """Extract the mapping class from the generic parameter.
-
-        Example: PwOutput(BaseOutput[_PwMapping]) → _PwMapping
-        """
-        for base in getattr(cls, "__orig_bases__", []):
-            if typing.get_origin(base) is BaseOutput and (
-                args := typing.get_args(base)
-            ):
-                return args[0]  # type: ignore[no-any-return]
-        raise TypeError(
-            f"{cls.__name__} must subclass BaseOutput[T] with a decorated output mapping, "
-            "e.g. class PwOutput(BaseOutput[_PwMapping])"
-        )
-
     def __init__(self, raw_outputs: dict[str, typing.Any]) -> None:
         self.raw_outputs = raw_outputs
 
-        def build(mapping_cls: type) -> dict[str, typing.Any]:
-            """Build the nested field mapping from a mapping class.
+        for name, hint in typing.get_type_hints(type(self)).items():
+            if isinstance(hint, type) and issubclass(hint, OutputView):
+                setattr(self, name, hint(self))
 
-            Each leaf is a `(spec, unit)` tuple; sub-mappings nest as dicts.
-            """
+        if not hasattr(self, "outputs"):
+            raise TypeError(
+                f"{type(self).__name__} must declare an `outputs: <OutputView subclass>` annotation."
+            )
 
-            result: dict[str, typing.Any] = {}
-            hints = typing.get_type_hints(mapping_cls, include_extras=True)
-
-            for field in dataclasses.fields(mapping_cls):
-                hint = hints[field.name]
-                spec = _spec_from_annotated(hint)
-
-                if spec is not None:
-                    result[field.name] = (spec, _unit_from_annotated(hint))
-                elif isinstance(field.default, SubMapping):
-                    result[field.name] = build(field.default.mapping_cls)
-                else:
-                    raise TypeError(
-                        f"{mapping_cls.__name__}.{field.name}: expected an "
-                        f"`Annotated[T, Spec(...)]` annotation or a `SubMapping` "
-                        f"default, got {field.default!r}"
-                    )
-
-            return result
-
-        self._field_mapping = build(self._get_mapping_class())
+        self._field_mapping: dict[str, typing.Any] = _build_field_mapping(self.outputs)
 
     @classmethod
     @abc.abstractmethod
-    def from_dir(cls, directory: str) -> BaseOutput[T]:
+    def from_dir(cls, directory: str) -> BaseOutput:
         pass  # pragma: no cover
 
     def get_output_from_spec(self, spec: typing.Any) -> typing.Any:
@@ -418,21 +264,3 @@ class BaseOutput(abc.ABC, typing.Generic[T]):
                 output_names.append(name)
 
         return output_names
-
-    @cached_property
-    def outputs(self) -> T:
-        """Namespace with available outputs."""
-
-        def build(mapping_cls: type, data: dict[str, typing.Any]) -> typing.Any:
-            defaults = {f.name: f.default for f in dataclasses.fields(mapping_cls)}
-            kwargs = {}
-
-            for name, default in defaults.items():
-                if isinstance(default, SubMapping):
-                    kwargs[name] = build(default.mapping_cls, data.get(name, {}))
-                elif name in data:
-                    kwargs[name] = data[name]
-
-            return mapping_cls(**kwargs)
-
-        return build(self._get_mapping_class(), self.get_output_dict())  # type: ignore[no-any-return]
